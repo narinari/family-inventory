@@ -81,3 +81,89 @@ pnpm dev:api
 | GET | /auth/members | 家族メンバー一覧 |
 | POST | /auth/invite | 招待コード発行 |
 | GET | /auth/invites | 招待コード一覧 |
+
+## CI/CD (GitHub Actions)
+
+### デプロイ先
+
+| サービス | デプロイ先 |
+|----------|-----------|
+| Web (Next.js) | Firebase Hosting |
+| API (Express) | Cloud Run |
+
+### 必要なGitHub Secrets
+
+以下のSecretsをリポジトリに設定してください：
+
+#### GCP認証（Workload Identity Federation推奨）
+
+| Secret名 | 説明 |
+|----------|------|
+| `GCP_PROJECT_ID` | GCPプロジェクトID |
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | Workload Identity Provider（例: `projects/123456/locations/global/workloadIdentityPools/github/providers/github`） |
+| `GCP_SERVICE_ACCOUNT` | サービスアカウント（例: `github-actions@PROJECT_ID.iam.gserviceaccount.com`） |
+
+#### Firebase関連
+
+| Secret名 | 説明 |
+|----------|------|
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Firebase サービスアカウントJSON |
+| `FIREBASE_API_KEY` | Firebase Web API Key |
+| `FIREBASE_AUTH_DOMAIN` | Firebase Auth Domain |
+| `FIREBASE_STORAGE_BUCKET` | Firebase Storage Bucket |
+| `FIREBASE_MESSAGING_SENDER_ID` | Firebase Messaging Sender ID |
+| `FIREBASE_APP_ID` | Firebase App ID |
+| `API_URL` | デプロイ後のAPI URL |
+
+### GCPの事前準備
+
+1. **Artifact Registry リポジトリ作成**
+   ```bash
+   gcloud artifacts repositories create family-inventory \
+     --repository-format=docker \
+     --location=asia-northeast1
+   ```
+
+2. **Workload Identity Federation 設定**
+   ```bash
+   # Workload Identity Pool 作成
+   gcloud iam workload-identity-pools create github \
+     --location="global" \
+     --display-name="GitHub Actions"
+
+   # Provider 作成
+   gcloud iam workload-identity-pools providers create-oidc github \
+     --location="global" \
+     --workload-identity-pool="github" \
+     --display-name="GitHub" \
+     --issuer-uri="https://token.actions.githubusercontent.com" \
+     --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository"
+
+   # サービスアカウント作成
+   gcloud iam service-accounts create github-actions \
+     --display-name="GitHub Actions"
+
+   # 必要なロール付与
+   gcloud projects add-iam-policy-binding $PROJECT_ID \
+     --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" \
+     --role="roles/run.admin"
+
+   gcloud projects add-iam-policy-binding $PROJECT_ID \
+     --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" \
+     --role="roles/artifactregistry.writer"
+
+   gcloud projects add-iam-policy-binding $PROJECT_ID \
+     --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" \
+     --role="roles/firebase.admin"
+   ```
+
+3. **Secret Manager にFirebase認証情報を保存**
+   ```bash
+   gcloud secrets create firebase-service-account \
+     --data-file=path/to/service-account.json
+   ```
+
+### ワークフロー
+
+- **deploy.yml**: `main`ブランチへのpush時に本番デプロイ
+- **preview.yml**: PRでFirebase Hostingのプレビューをデプロイ
