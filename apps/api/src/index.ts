@@ -1,8 +1,8 @@
-import express from 'express';
+import express, { type Express } from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.js';
 
-const app = express();
+const app: Express = express();
 const PORT = process.env.PORT || 8080;
 
 app.use(cors({
