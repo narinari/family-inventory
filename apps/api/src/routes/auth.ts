@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { authenticateToken } from '../middleware/auth.js';
 import {
@@ -14,7 +14,7 @@ import {
 } from '../services/auth.service.js';
 import { ErrorCodes } from '@family-inventory/shared';
 
-const router = Router();
+const router: Router = Router();
 
 const joinSchema = z.object({
   inviteCode: z.string().min(1),
