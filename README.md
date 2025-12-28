@@ -137,7 +137,8 @@ pnpm dev:api
      --workload-identity-pool="github" \
      --display-name="GitHub" \
      --issuer-uri="https://token.actions.githubusercontent.com" \
-     --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository"
+     --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository" \
+     --attribute-condition="assertion.repository_owner==\"YOUR_GITHUB_ORG_OR_USER\""
 
    # サービスアカウント作成
    gcloud iam service-accounts create github-actions \
