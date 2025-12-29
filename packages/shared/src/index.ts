@@ -1,3 +1,3 @@
-export * from './types/auth';
-export * from './types/inventory';
-export * from './utils/invite-code';
+export * from './types/auth.js';
+export * from './types/inventory.js';
+export * from './utils/invite-code.js';
