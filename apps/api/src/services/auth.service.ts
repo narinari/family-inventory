@@ -158,11 +158,6 @@ export async function getFamilyMembers(familyId: string): Promise<User[]> {
   });
 }
 
-export async function hasAnyUsers(): Promise<boolean> {
-  const snapshot = await usersCollection.limit(1).get();
-  return !snapshot.empty;
-}
-
 export async function getFamilyInviteCodes(familyId: string): Promise<InviteCode[]> {
   const snapshot = await inviteCodesCollection
     .where('familyId', '==', familyId)

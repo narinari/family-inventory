@@ -3,14 +3,12 @@ import { z } from 'zod';
 import { authenticateToken } from '../middleware/auth.js';
 import {
   getUserByUid,
-  createUser,
-  createFamily,
   createInviteCode,
   validateInviteCode,
   useInviteCode,
   getFamilyMembers,
   getFamilyInviteCodes,
-  hasAnyUsers,
+  createUser,
 } from '../services/auth.service.js';
 import { ErrorCodes } from '@family-inventory/shared';
 
@@ -37,19 +35,7 @@ router.post('/login', authenticateToken, async (req: Request, res: Response) => 
       return;
     }
 
-    const anyUsersExist = await hasAnyUsers();
-
-    if (!anyUsersExist) {
-      const family = await createFamily(authUser.uid);
-      const user = await createUser(authUser, family.id, true);
-
-      res.json({
-        success: true,
-        data: { user, isNewUser: true, needsInviteCode: false },
-      });
-      return;
-    }
-
+    // New users always need an invite code
     res.json({
       success: true,
       data: { user: null, isNewUser: true, needsInviteCode: true },
