@@ -75,7 +75,7 @@ jobs:
             --platform managed \
             --region ${{ env.GCP_REGION }} \
             --allow-unauthenticated \
-            --set-env-vars "^:^NODE_ENV=production:CORS_ORIGIN=https://${{ secrets.GCP_PROJECT_ID }}.web.app,https://${{ secrets.GCP_PROJECT_ID }}.firebaseapp.com" \
+            --set-env-vars "^;^NODE_ENV=production;CORS_ORIGIN=https://${{ secrets.GCP_PROJECT_ID }}.web.app,https://${{ secrets.GCP_PROJECT_ID }}.firebaseapp.com" \
             --set-secrets "FIREBASE_SERVICE_ACCOUNT=firebase-service-account:latest" \
             --memory 256Mi \
             --min-instances 0 \
