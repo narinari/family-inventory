@@ -16,6 +16,10 @@
     "type-check": {
       "dependsOn": ["^build"]
     },
+    "seed": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
     "clean": {
       "cache": false
     }

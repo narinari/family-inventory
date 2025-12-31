@@ -10,6 +10,7 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "type-check": "turbo type-check",
+    "seed": "turbo seed --filter=api",
     "clean": "turbo clean && rm -rf node_modules"
   },
   "devDependencies": {
