@@ -11,6 +11,8 @@ out/
 .env
 .env.local
 .env.*.local
+.envrc
+.direnv/
 
 # IDE
 .idea/
