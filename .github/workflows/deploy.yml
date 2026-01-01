@@ -10,6 +10,7 @@ env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_REGION: asia-northeast1
   API_SERVICE_NAME: family-inventory-api
+  BOT_SERVICE_NAME: family-inventory-bot
 
 jobs:
   # ビルドとテスト
@@ -91,6 +92,49 @@ jobs:
 
     outputs:
       api_url: ${{ steps.get-url.outputs.api_url }}
+
+  # Bot を Cloud Run にデプロイ
+  deploy-bot:
+    needs: [build, deploy-api]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
+
+      - name: Build and push Docker image
+        run: |
+          IMAGE_TAG="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/family-inventory/${{ env.BOT_SERVICE_NAME }}:${{ github.sha }}"
+          docker build -t $IMAGE_TAG -f apps/bot/Dockerfile .
+          docker push $IMAGE_TAG
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.BOT_SERVICE_NAME }} \
+            --image ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/family-inventory/${{ env.BOT_SERVICE_NAME }}:${{ github.sha }} \
+            --platform managed \
+            --region ${{ env.GCP_REGION }} \
+            --no-allow-unauthenticated \
+            --set-env-vars "NODE_ENV=production,API_BASE_URL=${{ needs.deploy-api.outputs.api_url }}" \
+            --set-secrets "BOT_TOKEN=discord-bot-token:latest" \
+            --memory 256Mi \
+            --min-instances 1 \
+            --max-instances 1 \
+            --no-cpu-throttling
 
   # Web を Firebase Hosting にデプロイ
   deploy-web:
