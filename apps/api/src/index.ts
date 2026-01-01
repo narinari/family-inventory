@@ -5,6 +5,7 @@ import itemTypesRoutes from './routes/item-types.js';
 import itemsRoutes from './routes/items.js';
 import boxesRoutes from './routes/boxes.js';
 import locationsRoutes from './routes/locations.js';
+import tagsRoutes from './routes/tags.js';
 
 const app: Express = express();
 const PORT = process.env.PORT || 8080;
@@ -35,6 +36,7 @@ app.use('/item-types', itemTypesRoutes);
 app.use('/items', itemsRoutes);
 app.use('/boxes', boxesRoutes);
 app.use('/locations', locationsRoutes);
+app.use('/tags', tagsRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({
