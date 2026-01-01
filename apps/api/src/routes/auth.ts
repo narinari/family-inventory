@@ -12,6 +12,7 @@ import {
   updateUserDiscordId,
   removeUserDiscordId,
   getUserByDiscordId,
+  updateUserProfile,
 } from '../services/auth.service.js';
 import { ErrorCodes } from '@family-inventory/shared';
 
@@ -24,6 +25,15 @@ const joinSchema = z.object({
 const createInviteSchema = z.object({
   expiresInDays: z.number().min(1).max(30).optional(),
 });
+
+const updateProfileSchema = z
+  .object({
+    displayName: z.string().min(1).max(50).trim().optional(),
+    photoURL: z.string().url().nullable().optional(),
+  })
+  .refine((data) => data.displayName !== undefined || data.photoURL !== undefined, {
+    message: '更新するフィールドが必要です',
+  });
 
 router.post('/login', authenticateToken, async (req: Request, res: Response) => {
   try {
@@ -117,6 +127,43 @@ router.get('/me', authenticateToken, async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: { code: ErrorCodes.INTERNAL_ERROR, message: 'ユーザー情報の取得中にエラーが発生しました' },
+    });
+  }
+});
+
+router.put('/me', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const authUser = req.authUser!;
+    const user = await getUserByUid(authUser.uid);
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
+      });
+      return;
+    }
+
+    const parsed = updateProfileSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: ErrorCodes.VALIDATION_ERROR,
+          message: '入力内容を確認してください',
+          details: parsed.error.errors,
+        },
+      });
+      return;
+    }
+
+    const updatedUser = await updateUserProfile(authUser.uid, parsed.data);
+    res.json({ success: true, data: { user: updatedUser } });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: ErrorCodes.INTERNAL_ERROR, message: 'プロフィール更新中にエラーが発生しました' },
     });
   }
 });

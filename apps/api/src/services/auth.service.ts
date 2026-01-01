@@ -205,3 +205,27 @@ export async function getUserByDiscordId(discordId: string): Promise<User | null
     updatedAt: (data.updatedAt as Timestamp).toDate(),
   } as User;
 }
+
+export async function updateUserProfile(
+  uid: string,
+  updates: { displayName?: string; photoURL?: string | null }
+): Promise<User> {
+  const updateData: Record<string, unknown> = {
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+
+  if (updates.displayName !== undefined) {
+    updateData.displayName = updates.displayName;
+  }
+  if (updates.photoURL !== undefined) {
+    updateData.photoURL = updates.photoURL;
+  }
+
+  await usersCollection.doc(uid).update(updateData);
+
+  const user = await getUserByUid(uid);
+  if (!user) {
+    throw new Error('User not found after update');
+  }
+  return user;
+}
