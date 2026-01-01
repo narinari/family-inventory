@@ -131,7 +131,7 @@ jobs:
             --no-allow-unauthenticated \
             --set-env-vars "NODE_ENV=production,API_BASE_URL=${{ needs.deploy-api.outputs.api_url }}" \
             --set-secrets "BOT_TOKEN=discord-bot-token:latest" \
-            --memory 256Mi \
+            --memory 512Mi \
             --min-instances 1 \
             --max-instances 1 \
             --no-cpu-throttling
