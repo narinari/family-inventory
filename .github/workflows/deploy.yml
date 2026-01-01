@@ -76,8 +76,8 @@ jobs:
             --platform managed \
             --region ${{ env.GCP_REGION }} \
             --allow-unauthenticated \
-            --set-env-vars "^;^NODE_ENV=production;CORS_ORIGIN=https://${{ secrets.GCP_PROJECT_ID }}.web.app,https://${{ secrets.GCP_PROJECT_ID }}.firebaseapp.com" \
-            --set-secrets "FIREBASE_SERVICE_ACCOUNT=firebase-service-account:latest" \
+            --set-env-vars "^;^NODE_ENV=production;CORS_ORIGIN=https://${{ secrets.GCP_PROJECT_ID }}.web.app,https://${{ secrets.GCP_PROJECT_ID }}.firebaseapp.com;DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }};DISCORD_REDIRECT_URI=https://${{ secrets.GCP_PROJECT_ID }}.web.app/settings/discord/callback" \
+            --set-secrets "FIREBASE_SERVICE_ACCOUNT=firebase-service-account:latest,DISCORD_CLIENT_SECRET=discord-client-secret:latest" \
             --memory 256Mi \
             --min-instances 0 \
             --max-instances 2
