@@ -183,7 +183,7 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 中
 **依存**: TASK-D03
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 基本的なスラッシュコマンドを実装する。
@@ -196,10 +196,10 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 | /help | ヘルプ表示 |
 
 #### 詳細タスク
-- [ ] `commands/ping.ts`
-- [ ] `commands/whoami.ts`
-- [ ] `commands/help.ts`
-- [ ] コマンド登録スクリプト
+- [x] `commands/ping.ts`
+- [x] `commands/whoami.ts`
+- [x] `commands/help.ts`
+- [x] コマンド登録スクリプト
 
 ---
 

@@ -1,7 +1,6 @@
-import { Client, GatewayIntentBits, Events, type Message } from 'discord.js';
+import { Client, Collection, GatewayIntentBits, Events, type ChatInputCommandInteraction } from 'discord.js';
 import { createServer } from 'node:http';
-import { apiClient } from './lib/api-client.js';
-import type { User } from '@family-inventory/shared';
+import { commands } from './commands/index.js';
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const PORT = process.env.PORT || 8080;
@@ -11,59 +10,49 @@ if (!BOT_TOKEN) {
   process.exit(1);
 }
 
-async function getLinkedUser(discordId: string): Promise<User | null> {
-  try {
-    return await apiClient.getUserByDiscordId(discordId);
-  } catch (error) {
-    console.error('Failed to get user by Discord ID:', error);
-    return null;
-  }
-}
-
-async function handleAuthenticatedMessage(
-  message: Message,
-  user: User
-): Promise<void> {
-  // 認証済みユーザー向けのコマンド処理
-  if (message.content.startsWith('!whoami')) {
-    await message.reply(`認証済み: ${user.displayName} (${user.email})`);
-  }
+// Command collection type
+interface Command {
+  data: { name: string };
+  execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
 }
 
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.DirectMessages,
-  ],
+  intents: [GatewayIntentBits.Guilds],
 });
+
+// Register commands
+const commandCollection = new Collection<string, Command>();
+for (const command of commands) {
+  commandCollection.set(command.data.name, command);
+}
 
 client.once(Events.ClientReady, (readyClient) => {
   console.log(`Bot is ready! Logged in as ${readyClient.user.tag}`);
+  console.log(`Registered ${commandCollection.size} commands`);
 });
 
-client.on(Events.MessageCreate, async (message) => {
-  if (message.author.bot) return;
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
 
-  // 基本的なコマンド（認証不要）
-  if (message.content.startsWith('!ping')) {
-    await message.reply('Pong!');
+  const command = commandCollection.get(interaction.commandName);
+
+  if (!command) {
+    console.error(`No command matching ${interaction.commandName} was found.`);
     return;
   }
 
-  // ユーザー特定が必要なコマンド
-  if (message.content.startsWith('!whoami') || message.content.startsWith('!help')) {
-    const user = await getLinkedUser(message.author.id);
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    console.error(`Error executing command ${interaction.commandName}:`, error);
 
-    if (!user) {
-      await message.reply(
-        'Discord連携がされていません。\nWebサイトの設定画面からDiscord連携を行ってください。'
-      );
-      return;
+    const errorMessage = '❌ コマンドの実行中にエラーが発生しました。';
+
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp({ content: errorMessage, ephemeral: true });
+    } else {
+      await interaction.reply({ content: errorMessage, ephemeral: true });
     }
-
-    await handleAuthenticatedMessage(message, user);
   }
 });
 
