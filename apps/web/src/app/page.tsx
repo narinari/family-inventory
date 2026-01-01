@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
 
@@ -66,13 +67,13 @@ export default function HomePage() {
 
 function QuickActionCard({ icon, label, href }: { icon: string; label: string; href: string }) {
   return (
-    <a
+    <Link
       href={href}
       className="flex flex-col items-center justify-center bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow"
     >
       <span className="text-3xl mb-2">{icon}</span>
       <span className="text-sm font-medium text-gray-700">{label}</span>
-    </a>
+    </Link>
   );
 }
 
