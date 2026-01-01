@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-export default function DiscordCallbackPage() {
+function DiscordCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refreshUser } = useAuth();
@@ -112,5 +112,24 @@ export default function DiscordCallbackPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="bg-white rounded-xl shadow-sm p-8 max-w-md w-full mx-4 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#5865F2] border-t-transparent mx-auto mb-4" />
+        <h1 className="text-xl font-semibold text-gray-900 mb-2">読み込み中...</h1>
+      </div>
+    </div>
+  );
+}
+
+export default function DiscordCallbackPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <DiscordCallbackContent />
+    </Suspense>
   );
 }
