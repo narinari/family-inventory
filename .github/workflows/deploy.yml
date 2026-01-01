@@ -136,6 +136,26 @@ jobs:
             --max-instances 1 \
             --no-cpu-throttling
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Deploy Discord slash commands
+        run: pnpm --filter bot deploy-commands
+        env:
+          BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
+
   # Web を Firebase Hosting にデプロイ
   deploy-web:
     needs: [build, deploy-api]
