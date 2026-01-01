@@ -1,20 +1,26 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { auth } from '@/lib/firebase';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 function DiscordCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { refreshUser } = useAuth();
+  const { refreshUser, loading, firebaseUser } = useAuth();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState('');
+  const processedRef = useRef(false);
 
   useEffect(() => {
+    // 認証状態がロード中の場合は待機
+    if (loading) return;
+
+    // 既に処理済みの場合はスキップ
+    if (processedRef.current) return;
+
     const handleCallback = async () => {
       const code = searchParams.get('code');
       const error = searchParams.get('error');
@@ -31,14 +37,16 @@ function DiscordCallbackContent() {
         return;
       }
 
-      try {
-        const token = await auth.currentUser?.getIdToken();
+      if (!firebaseUser) {
+        setStatus('error');
+        setErrorMessage('ログインが必要です');
+        return;
+      }
 
-        if (!token) {
-          setStatus('error');
-          setErrorMessage('ログインが必要です');
-          return;
-        }
+      processedRef.current = true;
+
+      try {
+        const token = await firebaseUser.getIdToken();
 
         const response = await fetch(`${API_BASE_URL}/auth/discord/callback`, {
           method: 'POST',
@@ -68,7 +76,7 @@ function DiscordCallbackContent() {
     };
 
     handleCallback();
-  }, [searchParams, refreshUser, router]);
+  }, [searchParams, refreshUser, router, loading, firebaseUser]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
