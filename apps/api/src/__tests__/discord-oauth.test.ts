@@ -1,6 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
+import { ErrorCodes } from '@family-inventory/shared';
+
+// Mock BOT_API_KEY environment variable
+const MOCK_BOT_API_KEY = 'test-bot-api-key';
+
+// Track if Bot API Key validation should pass
+let mockBotApiKeyValid = true;
+let mockBotApiKeyPresent = true;
+let mockBotApiKeyConfigured = true;
 
 // Mock the auth middleware
 vi.mock('../middleware/auth.js', () => ({
@@ -10,6 +19,30 @@ vi.mock('../middleware/auth.js', () => ({
       email: 'test@example.com',
       emailVerified: true,
     };
+    next();
+  },
+  authenticateBotApiKey: (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (!mockBotApiKeyConfigured) {
+      res.status(503).json({
+        success: false,
+        error: { code: ErrorCodes.BOT_API_NOT_CONFIGURED, message: 'Bot APIが設定されていません' },
+      });
+      return;
+    }
+    if (!mockBotApiKeyPresent) {
+      res.status(401).json({
+        success: false,
+        error: { code: ErrorCodes.UNAUTHORIZED, message: 'API Keyが必要です' },
+      });
+      return;
+    }
+    if (!mockBotApiKeyValid) {
+      res.status(401).json({
+        success: false,
+        error: { code: ErrorCodes.INVALID_API_KEY, message: '無効なAPI Keyです' },
+      });
+      return;
+    }
     next();
   },
 }));
@@ -232,6 +265,83 @@ describe('Discord OAuth2 Endpoints', () => {
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
       expect(response.body.error.code).toBe('USER_NOT_FOUND');
+    });
+  });
+
+  describe('GET /auth/discord/user/:discordId (Bot API)', () => {
+    beforeEach(() => {
+      // Reset mock flags for Bot API
+      mockBotApiKeyValid = true;
+      mockBotApiKeyPresent = true;
+      mockBotApiKeyConfigured = true;
+    });
+
+    it('should return user when valid API key and Discord ID provided', async () => {
+      const mockUser = {
+        id: 'user-123',
+        email: 'user@example.com',
+        displayName: 'Test User',
+        familyId: 'family-123',
+        role: 'member',
+        discordId: '123456789',
+      };
+      mockGetUserByDiscordId.mockResolvedValue(mockUser);
+
+      const response = await request(app)
+        .get('/auth/discord/user/123456789')
+        .set('X-API-Key', MOCK_BOT_API_KEY);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.user).toEqual(mockUser);
+      expect(mockGetUserByDiscordId).toHaveBeenCalledWith('123456789');
+    });
+
+    it('should return 401 when API key is missing', async () => {
+      mockBotApiKeyPresent = false;
+
+      const response = await request(app)
+        .get('/auth/discord/user/123456789');
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('UNAUTHORIZED');
+    });
+
+    it('should return 401 when API key is invalid', async () => {
+      mockBotApiKeyValid = false;
+
+      const response = await request(app)
+        .get('/auth/discord/user/123456789')
+        .set('X-API-Key', 'wrong-api-key');
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('INVALID_API_KEY');
+    });
+
+    it('should return 404 when user not found by Discord ID', async () => {
+      mockGetUserByDiscordId.mockResolvedValue(null);
+
+      const response = await request(app)
+        .get('/auth/discord/user/999999999')
+        .set('X-API-Key', MOCK_BOT_API_KEY);
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('USER_NOT_FOUND');
+    });
+
+    it('should return 503 when Bot API is not configured', async () => {
+      mockBotApiKeyConfigured = false;
+
+      const response = await request(app)
+        .get('/auth/discord/user/123456789')
+        .set('X-API-Key', MOCK_BOT_API_KEY);
+
+      expect(response.status).toBe(503);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('BOT_API_NOT_CONFIGURED');
     });
   });
 });

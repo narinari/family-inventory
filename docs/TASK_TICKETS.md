@@ -144,16 +144,16 @@ WebユーザーとDiscord IDを紐づけるAPIを実装する。
 
 **優先度**: 高
 **依存**: TASK-D01, TASK-D02
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 Discord IDからシステムユーザーを特定する機能を実装する。
 
 #### 詳細タスク
-- [ ] `GET /auth/discord/user/:discordId` API追加（Bot専用）
-- [ ] Bot用API認証（API Key方式）
-- [ ] auth.service.ts に `getUserByDiscordId` 関数追加
-- [ ] Bot側でユーザー特定ロジック実装
+- [x] `GET /auth/discord/user/:discordId` API追加（Bot専用）
+- [x] Bot用API認証（API Key方式）
+- [x] auth.service.ts に `getUserByDiscordId` 関数追加
+- [x] Bot側でユーザー特定ロジック実装
 
 #### セキュリティ
 - Bot→API間はAPI Keyで認証

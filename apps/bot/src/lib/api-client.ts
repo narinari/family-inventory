@@ -1,3 +1,5 @@
+import type { User } from '@family-inventory/shared';
+
 interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -10,6 +12,10 @@ interface ApiResponse<T> {
 interface ApiClientConfig {
   baseUrl: string;
   apiKey?: string;
+}
+
+interface GetUserByDiscordIdResponse {
+  user: User;
 }
 
 export class ApiClient {
@@ -69,6 +75,14 @@ export class ApiClient {
 
   async delete<T>(path: string): Promise<ApiResponse<T>> {
     return this.request<T>('DELETE', path);
+  }
+
+  async getUserByDiscordId(discordId: string): Promise<User | null> {
+    const response = await this.get<GetUserByDiscordIdResponse>(`/auth/discord/user/${discordId}`);
+    if (response.success && response.data) {
+      return response.data.user;
+    }
+    return null;
   }
 }
 

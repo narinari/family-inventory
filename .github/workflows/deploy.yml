@@ -77,7 +77,7 @@ jobs:
             --region ${{ env.GCP_REGION }} \
             --allow-unauthenticated \
             --set-env-vars "^;^NODE_ENV=production;CORS_ORIGIN=https://${{ secrets.GCP_PROJECT_ID }}.web.app,https://${{ secrets.GCP_PROJECT_ID }}.firebaseapp.com;DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }};DISCORD_REDIRECT_URI=https://${{ secrets.GCP_PROJECT_ID }}.web.app/settings/discord/callback" \
-            --set-secrets "FIREBASE_SERVICE_ACCOUNT=firebase-service-account:latest,DISCORD_CLIENT_SECRET=discord-client-secret:latest" \
+            --set-secrets "FIREBASE_SERVICE_ACCOUNT=firebase-service-account:latest,DISCORD_CLIENT_SECRET=discord-client-secret:latest,BOT_API_KEY=bot-api-key:latest" \
             --memory 256Mi \
             --min-instances 0 \
             --max-instances 2
@@ -130,7 +130,7 @@ jobs:
             --region ${{ env.GCP_REGION }} \
             --no-allow-unauthenticated \
             --set-env-vars "NODE_ENV=production,API_BASE_URL=${{ needs.deploy-api.outputs.api_url }}" \
-            --set-secrets "BOT_TOKEN=discord-bot-token:latest" \
+            --set-secrets "BOT_TOKEN=discord-bot-token:latest,BOT_API_KEY=bot-api-key:latest" \
             --memory 512Mi \
             --min-instances 1 \
             --max-instances 1 \

@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, authenticateBotApiKey } from '../middleware/auth.js';
 import {
   getUserByUid,
   createInviteCode,
@@ -416,6 +416,42 @@ router.delete('/discord', authenticateToken, async (req: Request, res: Response)
     res.status(500).json({
       success: false,
       error: { code: ErrorCodes.INTERNAL_ERROR, message: 'Discord連携解除中にエラーが発生しました' },
+    });
+  }
+});
+
+// ============================================
+// Bot専用エンドポイント（API Key認証）
+// ============================================
+
+router.get('/discord/user/:discordId', authenticateBotApiKey, async (req: Request, res: Response) => {
+  try {
+    const { discordId } = req.params;
+
+    if (!discordId) {
+      res.status(400).json({
+        success: false,
+        error: { code: ErrorCodes.VALIDATION_ERROR, message: 'Discord IDが必要です' },
+      });
+      return;
+    }
+
+    const user = await getUserByDiscordId(discordId);
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
+      });
+      return;
+    }
+
+    res.json({ success: true, data: { user } });
+  } catch (error) {
+    console.error('Get user by Discord ID error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: ErrorCodes.INTERNAL_ERROR, message: 'ユーザー情報の取得中にエラーが発生しました' },
     });
   }
 });
