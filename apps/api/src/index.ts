@@ -3,6 +3,7 @@ import cors from 'cors';
 import authRoutes from './routes/auth.js';
 import itemTypesRoutes from './routes/item-types.js';
 import itemsRoutes from './routes/items.js';
+import boxesRoutes from './routes/boxes.js';
 
 const app: Express = express();
 const PORT = process.env.PORT || 8080;
@@ -31,6 +32,7 @@ app.get('/health', (_req, res) => {
 app.use('/auth', authRoutes);
 app.use('/item-types', itemTypesRoutes);
 app.use('/items', itemsRoutes);
+app.use('/boxes', boxesRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({
