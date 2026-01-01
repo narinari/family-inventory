@@ -1,6 +1,8 @@
 import { Client, GatewayIntentBits, Events } from 'discord.js';
+import { createServer } from 'node:http';
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
+const PORT = process.env.PORT || 8080;
 
 if (!BOT_TOKEN) {
   console.error('Error: BOT_TOKEN environment variable is required');
@@ -34,15 +36,28 @@ client.login(BOT_TOKEN).catch((error) => {
   process.exit(1);
 });
 
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('Shutting down gracefully...');
-  client.destroy();
-  process.exit(0);
+// Health check server for Cloud Run
+const server = createServer((req, res) => {
+  if (req.url === '/health' || req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok', bot: client.isReady() ? 'connected' : 'connecting' }));
+  } else {
+    res.writeHead(404);
+    res.end();
+  }
 });
 
-process.on('SIGTERM', () => {
-  console.log('Received SIGTERM, shutting down...');
+server.listen(PORT, () => {
+  console.log(`Health check server listening on port ${PORT}`);
+});
+
+// Graceful shutdown
+const shutdown = () => {
+  console.log('Shutting down gracefully...');
+  server.close();
   client.destroy();
   process.exit(0);
-});
+};
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
