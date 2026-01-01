@@ -1,0 +1,743 @@
+# タスクチケット一覧
+
+このドキュメントは `requirements.md` と `architecture-design.md` を元に作成した実装タスクチケットです。
+
+---
+
+## 現在の実装状況
+
+| コンポーネント | 状況 | 備考 |
+|---------------|------|------|
+| 共有型定義 | 部分完了 | auth.ts, inventory.ts（持ち物関連は未実装） |
+| API認証 | 完了 | login, join, me, members, invite |
+| Web認証UI | 完了 | GoogleLogin, InviteCodeForm |
+| Firestoreルール | 未着手 | - |
+| 持ち物管理API | 未着手 | - |
+| 持ち物管理Web | 未着手 | - |
+| Discord Bot | 未着手 | - |
+
+---
+
+## Phase 0: 基盤・インフラ
+
+### TASK-001: 共有型定義の拡充
+
+**優先度**: 高
+**依存**: なし
+**ステータス**: 未着手
+
+#### 概要
+`packages/shared` に全エンティティの型定義を追加する。
+
+#### 詳細タスク
+- [ ] `types/family.ts` - 家族エンティティ型
+- [ ] `types/user.ts` - ユーザー型の拡充（Discord ID等）
+- [ ] `types/item-type.ts` - アイテム種別型
+- [ ] `types/item.ts` - 持ち物型
+- [ ] `types/box.ts` - 箱型
+- [ ] `types/location.ts` - 保管場所型
+- [ ] `types/tag.ts` - タグ型
+- [ ] `types/wishlist.ts` - 購入予定型
+- [ ] `types/api.ts` - API共通レスポンス型
+- [ ] Zodスキーマの追加（バリデーション用）
+
+#### 参照
+- `architecture-design.md` 5.2 エンティティ詳細
+- `requirements.md` 4. エンティティ設計
+
+---
+
+### TASK-002: Firestore セキュリティルール設定
+
+**優先度**: 高
+**依存**: TASK-001
+**ステータス**: 未着手
+
+#### 概要
+Firestoreのセキュリティルールを設定し、familyIdベースのマルチテナント分離を実装する。
+
+#### 詳細タスク
+- [ ] `firestore.rules` ファイル作成
+- [ ] 認証必須ルールの設定
+- [ ] familyIdによるアクセス制御
+- [ ] ロール（admin/member）による権限制御
+- [ ] ルールのテスト
+
+#### 参照
+- `architecture-design.md` 11. 権限設計
+
+---
+
+## Phase 1: Discord連携（優先実装）
+
+### TASK-D01: Discord Bot 基盤構築
+
+**優先度**: 高
+**依存**: なし
+**ステータス**: 未着手
+
+#### 概要
+Discord Botの基盤を構築する。
+
+#### 詳細タスク
+- [ ] `apps/bot` ディレクトリ作成
+- [ ] package.json（discord.js v14）
+- [ ] tsconfig.json
+- [ ] 環境変数設定（BOT_TOKEN等）
+- [ ] `src/index.ts` - Botエントリーポイント
+- [ ] `src/lib/api-client.ts` - 内部API呼び出しクライアント
+- [ ] Dockerfile（Cloud Run用）
+
+#### ディレクトリ構成
+```
+apps/bot/
+├── src/
+│   ├── index.ts
+│   ├── lib/
+│   │   └── api-client.ts
+│   ├── commands/
+│   └── events/
+├── Dockerfile
+├── package.json
+└── tsconfig.json
+```
+
+---
+
+### TASK-D02: Discord OAuth2 連携API
+
+**優先度**: 高
+**依存**: TASK-D01
+**ステータス**: 未着手
+
+#### 概要
+WebユーザーとDiscord IDを紐づけるAPIを実装する。
+
+#### エンドポイント
+| メソッド | パス | 説明 |
+|----------|------|------|
+| GET | /auth/discord | Discord OAuth2認証URL取得 |
+| POST | /auth/discord/callback | OAuth2コールバック処理 |
+| DELETE | /auth/discord | Discord連携解除 |
+
+#### 詳細タスク
+- [ ] Discord OAuth2設定（Discord Developer Portal）
+- [ ] `GET /auth/discord` - 認証URLを返す
+- [ ] `POST /auth/discord/callback` - codeからDiscord IDを取得しユーザーに保存
+- [ ] `DELETE /auth/discord` - discordIdをnullに更新
+- [ ] auth.service.ts に `updateUserDiscordId` 関数追加
+
+#### フロー
+```
+1. Web: 「Discord連携」ボタンクリック
+2. API: GET /auth/discord → Discord認証URL返却
+3. Web: Discord認証画面へリダイレクト
+4. Discord: 認可後、コールバックURLへリダイレクト
+5. Web: codeをAPIに送信
+6. API: POST /auth/discord/callback → Discord IDを取得・保存
+7. Web: 連携完了表示
+```
+
+---
+
+### TASK-D03: Bot ユーザー認証機能
+
+**優先度**: 高
+**依存**: TASK-D01, TASK-D02
+**ステータス**: 未着手
+
+#### 概要
+Discord IDからシステムユーザーを特定する機能を実装する。
+
+#### 詳細タスク
+- [ ] `GET /auth/discord/user/:discordId` API追加（Bot専用）
+- [ ] Bot用API認証（API Key方式）
+- [ ] auth.service.ts に `getUserByDiscordId` 関数追加
+- [ ] Bot側でユーザー特定ロジック実装
+
+#### セキュリティ
+- Bot→API間はAPI Keyで認証
+- 環境変数: `BOT_API_KEY`
+
+---
+
+### TASK-D04: Web Discord連携UI
+
+**優先度**: 高
+**依存**: TASK-D02
+**ステータス**: 未着手
+
+#### 概要
+Web側にDiscord連携ボタンと状態表示を追加する。
+
+#### 詳細タスク
+- [ ] `/settings` ページ作成（または既存に追加）
+- [ ] Discord連携ボタンコンポーネント
+- [ ] 連携状態表示（連携済み/未連携）
+- [ ] 連携解除ボタン
+- [ ] OAuth2コールバック処理ページ
+
+---
+
+### TASK-D05: Bot 基本コマンド実装
+
+**優先度**: 中
+**依存**: TASK-D03
+**ステータス**: 未着手
+
+#### 概要
+基本的なスラッシュコマンドを実装する。
+
+#### コマンド一覧（初期実装）
+| コマンド | 説明 |
+|----------|------|
+| /ping | 疎通確認 |
+| /whoami | 連携ユーザー情報表示 |
+| /help | ヘルプ表示 |
+
+#### 詳細タスク
+- [ ] `commands/ping.ts`
+- [ ] `commands/whoami.ts`
+- [ ] `commands/help.ts`
+- [ ] コマンド登録スクリプト
+
+---
+
+## Phase 2: バックエンド API
+
+### TASK-101: ユーザー管理 API
+
+**優先度**: 中
+**依存**: TASK-001
+**ステータス**: 部分完了（me, members, invite は実装済み）
+
+#### 概要
+ユーザー管理に関するAPIエンドポイントを実装する。
+
+#### エンドポイント
+| メソッド | パス | 説明 | 状況 |
+|----------|------|------|------|
+| GET | /users/me | 自分の情報取得 | 完了 |
+| PUT | /users/me | 自分の情報更新 | 未着手 |
+| GET | /users | 家族メンバー一覧 | 完了 |
+| POST | /users/invite | 招待コード発行 | 完了 |
+| POST | /users/join | 招待コードで参加 | 完了 |
+
+#### 残タスク
+- [ ] `PUT /users/me` - プロフィール更新
+
+---
+
+### TASK-102: アイテム種別 API
+
+**優先度**: 中
+**依存**: TASK-001
+**ステータス**: 未着手
+
+#### 概要
+アイテム種別（マスター）のCRUD APIを実装する。
+
+#### エンドポイント
+| メソッド | パス | 説明 |
+|----------|------|------|
+| GET | /item-types | 一覧取得 |
+| POST | /item-types | 新規作成 |
+| PUT | /item-types/:id | 更新 |
+| DELETE | /item-types/:id | 削除 |
+
+#### 詳細タスク
+- [ ] `routes/item-types.ts` 作成
+- [ ] `services/item-type.service.ts` 作成
+- [ ] リクエストバリデーション
+- [ ] 削除時の参照チェック
+
+---
+
+### TASK-103: 持ち物 API
+
+**優先度**: 中
+**依存**: TASK-102
+**ステータス**: 未着手
+
+#### 概要
+持ち物のCRUDおよびステータス変更APIを実装する。
+
+#### エンドポイント
+| メソッド | パス | 説明 |
+|----------|------|------|
+| GET | /items | 一覧取得（フィルタ対応） |
+| POST | /items | 新規登録 |
+| PUT | /items/:id | 更新 |
+| POST | /items/:id/consume | 消費済にする |
+| POST | /items/:id/give | 譲渡済にする |
+| POST | /items/:id/sell | 売却済にする |
+| GET | /items/:id/location | どこにあるか取得 |
+
+#### 詳細タスク
+- [ ] `routes/items.ts` 作成
+- [ ] `services/item.service.ts` 作成
+- [ ] フィルタ・検索ロジック
+- [ ] ステータス遷移ロジック
+- [ ] 場所検索ロジック（箱 → 保管場所の解決）
+
+#### 参照
+- `requirements.md` 7. 持ち物のライフサイクル
+
+---
+
+### TASK-104: 箱 API
+
+**優先度**: 中
+**依存**: TASK-001
+**ステータス**: 未着手
+
+#### 概要
+箱のCRUDおよび中身一覧APIを実装する。
+
+#### エンドポイント
+| メソッド | パス | 説明 |
+|----------|------|------|
+| GET | /boxes | 一覧取得 |
+| POST | /boxes | 新規作成 |
+| PUT | /boxes/:id | 更新 |
+| DELETE | /boxes/:id | 削除 |
+| GET | /boxes/:id/items | 箱の中身一覧 |
+
+#### 詳細タスク
+- [ ] `routes/boxes.ts` 作成
+- [ ] `services/box.service.ts` 作成
+- [ ] 削除時の格納アイテムチェック
+
+---
+
+### TASK-105: 保管場所 API
+
+**優先度**: 中
+**依存**: TASK-001
+**ステータス**: 未着手
+
+#### 概要
+保管場所のCRUDおよび箱一覧APIを実装する。
+
+#### エンドポイント
+| メソッド | パス | 説明 |
+|----------|------|------|
+| GET | /locations | 一覧取得 |
+| POST | /locations | 新規作成 |
+| PUT | /locations/:id | 更新 |
+| DELETE | /locations/:id | 削除 |
+| GET | /locations/:id/boxes | 場所内の箱一覧 |
+
+#### 詳細タスク
+- [ ] `routes/locations.ts` 作成
+- [ ] `services/location.service.ts` 作成
+
+---
+
+### TASK-106: タグ API
+
+**優先度**: 中
+**依存**: TASK-001
+**ステータス**: 未着手
+
+#### 概要
+タグのCRUD APIを実装する。
+
+#### エンドポイント
+| メソッド | パス | 説明 |
+|----------|------|------|
+| GET | /tags | 一覧取得 |
+| POST | /tags | 新規作成 |
+| DELETE | /tags/:id | 削除 |
+
+#### 詳細タスク
+- [ ] `routes/tags.ts` 作成
+- [ ] `services/tag.service.ts` 作成
+
+---
+
+### TASK-107: 購入予定 API
+
+**優先度**: 中
+**依存**: TASK-103
+**ステータス**: 未着手
+
+#### 概要
+購入予定リストのCRUDおよび購入完了→持ち物連携APIを実装する。
+
+#### エンドポイント
+| メソッド | パス | 説明 |
+|----------|------|------|
+| GET | /wishlist | 一覧取得 |
+| POST | /wishlist | 新規追加 |
+| PUT | /wishlist/:id | 更新 |
+| POST | /wishlist/:id/purchase | 購入完了→持ち物へ |
+| POST | /wishlist/:id/cancel | 見送り |
+
+#### 詳細タスク
+- [ ] `routes/wishlist.ts` 作成
+- [ ] `services/wishlist.service.ts` 作成
+- [ ] 購入完了時の持ち物自動登録ロジック
+
+#### 参照
+- `requirements.md` 8.7 購入予定 → 持ち物 への連携
+
+---
+
+## Phase 3: フロントエンド Web
+
+### TASK-201: ダッシュボード画面
+
+**優先度**: 中
+**依存**: TASK-103
+**ステータス**: 未着手
+
+#### 概要
+ログイン後のホーム画面を実装する。
+
+#### 詳細タスク
+- [ ] `/dashboard` ページ作成
+- [ ] 持ち物サマリ表示
+- [ ] 最近追加した持ち物
+- [ ] 購入予定リストの概要
+
+---
+
+### TASK-202: 持ち物管理画面
+
+**優先度**: 中
+**依存**: TASK-103
+**ステータス**: 未着手
+
+#### 概要
+持ち物の一覧・検索・登録・編集画面を実装する。
+
+#### 詳細タスク
+- [ ] `/items` 一覧ページ
+- [ ] `/items/new` 新規登録ページ
+- [ ] `/items/[id]` 詳細・編集ページ
+- [ ] フィルタ・検索機能
+- [ ] ステータス変更モーダル（消費/譲渡/売却）
+
+---
+
+### TASK-203: 箱・保管場所管理画面
+
+**優先度**: 中
+**依存**: TASK-104, TASK-105
+**ステータス**: 未着手
+
+#### 概要
+箱と保管場所の管理画面を実装する。
+
+#### 詳細タスク
+- [ ] `/boxes` 箱一覧ページ
+- [ ] `/boxes/[id]` 箱詳細（中身一覧）ページ
+- [ ] `/locations` 保管場所一覧ページ
+- [ ] `/locations/[id]` 場所詳細（箱一覧）ページ
+- [ ] 新規作成・編集モーダル
+
+---
+
+### TASK-204: 購入予定リスト画面
+
+**優先度**: 中
+**依存**: TASK-107
+**ステータス**: 未着手
+
+#### 概要
+購入予定リストの管理画面を実装する。
+
+#### 詳細タスク
+- [ ] `/wishlist` 一覧ページ
+- [ ] `/wishlist/new` 新規追加ページ
+- [ ] `/wishlist/[id]` 詳細・編集ページ
+- [ ] 購入完了アクション
+- [ ] 優先度フィルタ
+
+---
+
+### TASK-205: ユーザー設定画面
+
+**優先度**: 中
+**依存**: TASK-101, TASK-D04
+**ステータス**: 未着手
+
+#### 概要
+ユーザー設定・家族メンバー管理画面を実装する。
+
+#### 詳細タスク
+- [ ] `/settings` 設定ページ
+- [ ] `/settings/profile` プロフィール編集
+- [ ] `/settings/members` メンバー一覧（管理者のみ）
+- [ ] 招待コード発行機能
+- [ ] Discord連携UI（TASK-D04と統合）
+
+---
+
+### TASK-206: マスター管理画面
+
+**優先度**: 低
+**依存**: TASK-102, TASK-106
+**ステータス**: 未着手
+
+#### 概要
+アイテム種別・タグのマスター管理画面を実装する。
+
+#### 詳細タスク
+- [ ] `/settings/item-types` アイテム種別一覧
+- [ ] `/settings/tags` タグ一覧
+- [ ] 新規作成・編集・削除機能
+
+---
+
+## Phase 4: Discord Bot 拡張
+
+### TASK-301: Bot 持ち物コマンド実装
+
+**優先度**: 低
+**依存**: TASK-D05, TASK-103
+**ステータス**: 未着手
+
+#### 概要
+持ち物操作のスラッシュコマンドを実装する。
+
+#### コマンド一覧
+| コマンド | 説明 |
+|----------|------|
+| /item add | 持ち物登録 |
+| /item list | 一覧表示 |
+| /item search | 検索 |
+| /item where | 場所検索 |
+| /item use | 消費済 |
+| /item give | 譲渡済 |
+| /item sell | 売却済 |
+
+#### 詳細タスク
+- [ ] `commands/item.ts` 実装
+
+---
+
+### TASK-302: Bot 購入予定コマンド実装
+
+**優先度**: 低
+**依存**: TASK-D05, TASK-107
+**ステータス**: 未着手
+
+#### 概要
+購入予定リストのスラッシュコマンドを実装する。
+
+#### コマンド一覧
+| コマンド | 説明 |
+|----------|------|
+| /want add | 欲しい物追加 |
+| /want list | 購入予定一覧 |
+| /want done | 購入完了 |
+| /want cancel | 見送り |
+| /want detail | 詳細表示 |
+
+#### 詳細タスク
+- [ ] `commands/want.ts` 実装
+
+---
+
+### TASK-303: Bot 箱・場所コマンド実装
+
+**優先度**: 低
+**依存**: TASK-D05, TASK-104, TASK-105
+**ステータス**: 未着手
+
+#### 概要
+箱・保管場所のスラッシュコマンドを実装する。
+
+#### コマンド一覧
+| コマンド | 説明 |
+|----------|------|
+| /box list | 箱一覧 |
+| /box contents | 箱の中身表示 |
+| /place list | 保管場所一覧 |
+
+#### 詳細タスク
+- [ ] `commands/box.ts` 実装
+- [ ] `commands/place.ts` 実装
+
+---
+
+### TASK-304: 自然言語処理連携
+
+**優先度**: 低
+**依存**: TASK-301, TASK-302
+**ステータス**: 未着手
+
+#### 概要
+Gemini 2.5 Flash API を使った自然言語処理を実装する。
+
+#### 詳細タスク
+- [ ] Gemini API クライアント実装
+- [ ] 意図解析プロンプト設計
+- [ ] パラメータ抽出ロジック
+- [ ] 操作種別判定
+- [ ] 応答生成
+
+#### 対応する自然言語操作
+- 場所検索（「○○どこ？」）
+- 持ち物登録（「○○買った」）
+- 欲しい物追加（「○○欲しい」）
+- 購入完了（「○○届いた」）
+- 消費（「○○使い切った」）
+- 譲渡（「○○あげた」）
+- 売却（「○○売った」）
+- 一覧表示（「○○の一覧見せて」）
+- 格納先変更（「○○を△△に入れた」）
+
+#### 参照
+- `architecture-design.md` 3.3 Discord Bot 処理フロー
+- `requirements.md` 10.2 自然言語での操作例
+
+---
+
+## Phase 5: 統合・運用
+
+### TASK-401: エラーハンドリング統一
+
+**優先度**: 中
+**依存**: Phase 2, Phase 3
+**ステータス**: 未着手
+
+#### 概要
+API・Web全体でエラーハンドリングを統一する。
+
+#### 詳細タスク
+- [ ] エラーコード体系設計
+- [ ] APIエラーレスポンス統一
+- [ ] Webエラー表示コンポーネント
+- [ ] エラーログ収集
+
+---
+
+### TASK-402: シードデータ拡充
+
+**優先度**: 低
+**依存**: 全API
+**ステータス**: 未着手
+
+#### 概要
+開発・デモ用のシードデータを拡充する。
+
+#### 詳細タスク
+- [ ] サンプル家族データ
+- [ ] サンプルアイテム種別
+- [ ] サンプル持ち物
+- [ ] サンプル箱・保管場所
+- [ ] サンプル購入予定
+
+---
+
+### TASK-403: デプロイパイプライン整備
+
+**優先度**: 中
+**依存**: なし
+**ステータス**: 未着手
+
+#### 概要
+CI/CD パイプラインを整備する。
+
+#### 詳細タスク
+- [ ] GitHub Actions ワークフロー
+- [ ] Web (Firebase Hosting) 自動デプロイ
+- [ ] API (Cloud Run) 自動デプロイ
+- [ ] Bot (Cloud Run) 自動デプロイ
+- [ ] 型チェック・lint の CI
+
+---
+
+### TASK-404: ドキュメント整備
+
+**優先度**: 低
+**依存**: 全タスク
+**ステータス**: 未着手
+
+#### 概要
+運用ドキュメントを整備する。
+
+#### 詳細タスク
+- [ ] API仕様書（OpenAPI/Swagger）
+- [ ] 環境構築手順
+- [ ] デプロイ手順
+- [ ] トラブルシューティング
+
+---
+
+## 依存関係図
+
+```
+Phase 0: 基盤
+    TASK-001 (型定義)
+        └──→ TASK-002 (Firestore Rules)
+
+Phase 1: Discord連携（優先）
+    TASK-D01 (Bot基盤)
+        ├──→ TASK-D02 (OAuth2 API)
+        │        ├──→ TASK-D03 (Bot認証)
+        │        └──→ TASK-D04 (Web UI)
+        └──→ TASK-D05 (基本コマンド) ←── TASK-D03
+
+Phase 2: API
+    TASK-001 ──→ TASK-101 (ユーザー)
+            ├──→ TASK-102 (アイテム種別) ──→ TASK-103 (持ち物)
+            ├──→ TASK-104 (箱)
+            ├──→ TASK-105 (保管場所)
+            ├──→ TASK-106 (タグ)
+            └──→ TASK-107 (購入予定) ←── TASK-103
+
+Phase 3: Web
+    TASK-103 ──→ TASK-201 (ダッシュボード)
+            ──→ TASK-202 (持ち物管理)
+    TASK-104 ──→ TASK-203 (箱・場所)
+    TASK-105 ──↗
+    TASK-107 ──→ TASK-204 (購入予定)
+    TASK-101 ──→ TASK-205 (ユーザー設定)
+    TASK-D04 ──↗
+    TASK-102 ──→ TASK-206 (マスター管理)
+    TASK-106 ──↗
+
+Phase 4: Bot拡張
+    TASK-D05 ──→ TASK-301 (持ち物コマンド) ←── TASK-103
+            ──→ TASK-302 (購入予定コマンド) ←── TASK-107
+            ──→ TASK-303 (箱・場所コマンド) ←── TASK-104, TASK-105
+    TASK-301 ──→ TASK-304 (自然言語)
+    TASK-302 ──↗
+```
+
+---
+
+## 推奨実装順序
+
+### Step 1: Discord連携（現在の優先目標）
+1. **TASK-D01** - Discord Bot基盤構築
+2. **TASK-D02** - Discord OAuth2連携API
+3. **TASK-D03** - Bot ユーザー認証機能
+4. **TASK-D04** - Web Discord連携UI
+5. **TASK-D05** - Bot 基本コマンド
+
+### Step 2: 持ち物管理基盤
+6. **TASK-001** - 共有型定義拡充
+7. **TASK-102** - アイテム種別API
+8. **TASK-103** - 持ち物API
+9. **TASK-104** - 箱API
+10. **TASK-105** - 保管場所API
+11. **TASK-106** - タグAPI
+12. **TASK-107** - 購入予定API
+
+### Step 3: Web画面
+13. **TASK-201** - ダッシュボード
+14. **TASK-202** - 持ち物管理画面
+15. 以降は優先度に応じて実装
+
+---
+
+## 改訂履歴
+
+| バージョン | 日付 | 変更内容 |
+|-----------|------|---------|
+| v1.0 | 2026-01-01 | 初版作成（Discord連携を優先タスクとして整理） |
