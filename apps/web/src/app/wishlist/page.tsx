@@ -126,7 +126,7 @@ export default function WishlistPage() {
                 return (
                   <li key={item.id} className="p-4 hover:bg-gray-50">
                     <div className="flex items-center justify-between">
-                      <Link href={`/wishlist/${item.id}`} className="flex-1">
+                      <Link href={`/wishlist/detail?id=${item.id}`} className="flex-1">
                         <div className="flex items-center gap-3">
                           <PriorityBadge priority={item.priority} />
                           <div>

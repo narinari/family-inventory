@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
@@ -11,8 +11,8 @@ import type { Item, ItemType, Box, User } from '@family-inventory/shared';
 export default function ItemDetailPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const params = useParams();
-  const itemId = params.id as string;
+  const searchParams = useSearchParams();
+  const itemId = searchParams.get('id');
 
   const [item, setItem] = useState<Item | null>(null);
   const [itemTypes, setItemTypes] = useState<ItemType[]>([]);
@@ -42,6 +42,7 @@ export default function ItemDetailPage() {
   }, [user, itemId]);
 
   async function loadData() {
+    if (!itemId) return;
     try {
       const [itemData, typesData, boxesData, membersData] = await Promise.all([
         getItem(itemId),

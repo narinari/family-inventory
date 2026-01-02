@@ -153,7 +153,7 @@ export default function ItemsPage() {
                 return (
                   <li key={item.id} className="p-4 hover:bg-gray-50">
                     <div className="flex items-center justify-between">
-                      <Link href={`/items/${item.id}`} className="flex-1">
+                      <Link href={`/items/detail?id=${item.id}`} className="flex-1">
                         <div className="flex items-center gap-4">
                           <div>
                             <p className="font-medium text-gray-900">

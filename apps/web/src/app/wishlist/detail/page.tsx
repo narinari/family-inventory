@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
@@ -11,8 +11,8 @@ import type { Wishlist, User, Priority } from '@family-inventory/shared';
 export default function WishlistDetailPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const params = useParams();
-  const wishlistId = params.id as string;
+  const searchParams = useSearchParams();
+  const wishlistId = searchParams.get('id');
 
   const [wishlistItem, setWishlistItem] = useState<Wishlist | null>(null);
   const [members, setMembers] = useState<User[]>([]);
@@ -43,6 +43,7 @@ export default function WishlistDetailPage() {
   }, [user, wishlistId]);
 
   async function loadData() {
+    if (!wishlistId) return;
     try {
       const [wishlistData, membersData] = await Promise.all([
         getWishlistItem(wishlistId),

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
@@ -11,8 +11,8 @@ import type { Box, Item, ItemType, Location } from '@family-inventory/shared';
 export default function BoxDetailPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const params = useParams();
-  const boxId = params.id as string;
+  const searchParams = useSearchParams();
+  const boxId = searchParams.get('id');
 
   const [box, setBox] = useState<Box | null>(null);
   const [items, setItems] = useState<Item[]>([]);
@@ -33,6 +33,7 @@ export default function BoxDetailPage() {
   }, [user, boxId]);
 
   async function loadData() {
+    if (!boxId) return;
     try {
       const [boxData, typesData, locationsData] = await Promise.all([
         getBoxItems(boxId),
@@ -105,7 +106,7 @@ export default function BoxDetailPage() {
                 const itemType = itemTypeMap.get(item.itemTypeId);
                 return (
                   <li key={item.id} className="py-3">
-                    <Link href={`/items/${item.id}`} className="flex items-center justify-between hover:text-primary-600">
+                    <Link href={`/items/detail?id=${item.id}`} className="flex items-center justify-between hover:text-primary-600">
                       <span className="font-medium">{itemType?.name ?? '不明なアイテム'}</span>
                       <span className="text-sm text-gray-500">
                         {new Date(item.createdAt).toLocaleDateString('ja-JP')}

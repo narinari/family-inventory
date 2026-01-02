@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
@@ -11,8 +11,8 @@ import type { Location, Box } from '@family-inventory/shared';
 export default function LocationDetailPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const params = useParams();
-  const locationId = params.id as string;
+  const searchParams = useSearchParams();
+  const locationId = searchParams.get('id');
 
   const [location, setLocation] = useState<Location | null>(null);
   const [boxes, setBoxes] = useState<Box[]>([]);
@@ -31,6 +31,7 @@ export default function LocationDetailPage() {
   }, [user, locationId]);
 
   async function loadData() {
+    if (!locationId) return;
     try {
       const data = await getLocationBoxes(locationId);
 
@@ -92,7 +93,7 @@ export default function LocationDetailPage() {
               {boxes.map((box) => (
                 <Link
                   key={box.id}
-                  href={`/boxes/${box.id}`}
+                  href={`/boxes/detail?id=${box.id}`}
                   className="block p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
                 >
                   <h3 className="font-medium text-gray-900">{box.name}</h3>

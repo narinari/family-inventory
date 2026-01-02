@@ -147,7 +147,7 @@ export default function BoxesPage() {
               const location = box.locationId ? locationMap.get(box.locationId) : null;
               return (
                 <div key={box.id} className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow">
-                  <Link href={`/boxes/${box.id}`} className="block">
+                  <Link href={`/boxes/detail?id=${box.id}`} className="block">
                     <h3 className="font-semibold text-gray-900">{box.name}</h3>
                     {location && (
                       <p className="text-sm text-gray-500 mt-1">📍 {location.name}</p>

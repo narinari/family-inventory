@@ -152,7 +152,7 @@ export default function LocationsPage() {
               const boxCount = boxCountByLocation.get(location.id) ?? 0;
               return (
                 <div key={location.id} className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow">
-                  <Link href={`/locations/${location.id}`} className="block">
+                  <Link href={`/locations/detail?id=${location.id}`} className="block">
                     <h3 className="font-semibold text-gray-900">{location.name}</h3>
                     {location.address && (
                       <p className="text-sm text-gray-500 mt-1">{location.address}</p>
