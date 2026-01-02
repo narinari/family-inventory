@@ -3,7 +3,6 @@ import type { User, Item, ItemType, Box, Location, Tag, Wishlist } from '@family
 
 export const mockUser: User = {
   id: 'user-1',
-  uid: 'uid-1',
   familyId: 'family-1',
   email: 'test@example.com',
   displayName: 'Test User',
