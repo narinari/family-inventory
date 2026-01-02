@@ -58,7 +58,7 @@ export default function MembersPage() {
       } else {
         setError(result.error?.message ?? '招待コードの発行に失敗しました');
       }
-    } catch (err) {
+    } catch {
       setError('招待コードの発行に失敗しました');
     } finally {
       setCreating(false);

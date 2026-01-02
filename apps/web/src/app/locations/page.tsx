@@ -90,7 +90,7 @@ export default function LocationsPage() {
       } else {
         setError(result?.error?.message ?? '保存に失敗しました');
       }
-    } catch (err) {
+    } catch {
       setError('保存に失敗しました');
     } finally {
       setSubmitting(false);
@@ -108,7 +108,7 @@ export default function LocationsPage() {
       } else {
         setError(result.error?.message ?? '削除に失敗しました');
       }
-    } catch (err) {
+    } catch {
       setError('削除に失敗しました');
     }
   }

@@ -4,7 +4,6 @@ import { authenticateToken } from '../middleware/auth.js';
 import { getUserByUid } from '../services/auth.service.js';
 import {
   getItemTypes,
-  getItemTypeById,
   createItemType,
   updateItemType,
   deleteItemType,

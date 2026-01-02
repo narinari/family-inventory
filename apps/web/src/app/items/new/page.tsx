@@ -80,7 +80,7 @@ export default function NewItemPage() {
       } else {
         setError(result.error?.message ?? '登録に失敗しました');
       }
-    } catch (err) {
+    } catch {
       setError('登録に失敗しました');
     } finally {
       setSubmitting(false);

@@ -94,7 +94,7 @@ export default function WishlistDetailPage() {
       } else {
         setError(result.error?.message ?? '更新に失敗しました');
       }
-    } catch (err) {
+    } catch {
       setError('更新に失敗しました');
     } finally {
       setSubmitting(false);

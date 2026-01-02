@@ -61,7 +61,7 @@ export default function TagsPage() {
       } else {
         setError(result.error?.message ?? '作成に失敗しました');
       }
-    } catch (err) {
+    } catch {
       setError('作成に失敗しました');
     } finally {
       setSubmitting(false);
@@ -79,7 +79,7 @@ export default function TagsPage() {
       } else {
         setError(result.error?.message ?? '削除に失敗しました');
       }
-    } catch (err) {
+    } catch {
       setError('削除に失敗しました');
     }
   }

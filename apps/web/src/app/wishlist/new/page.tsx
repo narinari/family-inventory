@@ -73,7 +73,7 @@ export default function NewWishlistPage() {
       } else {
         setError(result.error?.message ?? '追加に失敗しました');
       }
-    } catch (err) {
+    } catch {
       setError('追加に失敗しました');
     } finally {
       setSubmitting(false);
