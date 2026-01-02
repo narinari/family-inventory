@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
 import { DiscordLinkButton } from '@/components/settings/DiscordLinkButton';
@@ -46,7 +47,15 @@ export default function SettingsPage() {
         )}
 
         <section className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">プロフィール</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">プロフィール</h2>
+            <Link
+              href="/settings/profile"
+              className="text-sm text-primary-600 hover:text-primary-700"
+            >
+              編集
+            </Link>
+          </div>
           <div className="flex items-center gap-4">
             {user.photoURL ? (
               <img src={user.photoURL} alt={user.displayName} className="w-16 h-16 rounded-full" />
@@ -67,6 +76,23 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        {user.role === 'admin' && (
+          <section className="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-lg font-semibold text-gray-900">メンバー管理</h2>
+              <Link
+                href="/settings/members"
+                className="text-sm text-primary-600 hover:text-primary-700"
+              >
+                詳細
+              </Link>
+            </div>
+            <p className="text-sm text-gray-500">
+              家族メンバーの一覧表示や招待コードの発行ができます。
+            </p>
+          </section>
+        )}
+
         <section className="bg-white rounded-xl shadow-sm p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-2">Discord 連携</h2>
           <p className="text-sm text-gray-500 mb-4">
@@ -76,6 +102,26 @@ export default function SettingsPage() {
             onSuccess={() => setMessage({ type: 'success', text: 'Discord連携を解除しました' })}
             onError={(text) => setMessage({ type: 'error', text })}
           />
+        </section>
+
+        <section className="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold text-gray-900">マスターデータ管理</h2>
+          </div>
+          <div className="flex gap-4 mt-4">
+            <Link
+              href="/settings/item-types"
+              className="flex-1 p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors text-center"
+            >
+              <p className="font-medium text-gray-900">アイテム種別</p>
+            </Link>
+            <Link
+              href="/settings/tags"
+              className="flex-1 p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors text-center"
+            >
+              <p className="font-medium text-gray-900">タグ</p>
+            </Link>
+          </div>
         </section>
 
         <section className="bg-white rounded-xl shadow-sm p-6">

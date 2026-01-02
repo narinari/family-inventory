@@ -238,3 +238,33 @@ export async function getMembers(): Promise<User[]> {
   const res = await fetchWithAuth<{ members: User[] }>('/auth/members');
   return res.data?.members ?? [];
 }
+
+export async function updateProfile(input: { displayName?: string }): Promise<ApiResponse<{ user: User }>> {
+  return fetchWithAuth('/auth/me', {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
+}
+
+// Invite codes
+export interface InviteCode {
+  id: string;
+  familyId: string;
+  code: string;
+  createdBy: string;
+  usedBy?: string;
+  expiresAt: Date;
+  createdAt: Date;
+}
+
+export async function createInviteCode(expiresInDays?: number): Promise<ApiResponse<{ inviteCode: InviteCode }>> {
+  return fetchWithAuth('/auth/invite', {
+    method: 'POST',
+    body: JSON.stringify({ expiresInDays }),
+  });
+}
+
+export async function getInviteCodes(): Promise<InviteCode[]> {
+  const res = await fetchWithAuth<{ inviteCodes: InviteCode[] }>('/auth/invites');
+  return res.data?.inviteCodes ?? [];
+}
