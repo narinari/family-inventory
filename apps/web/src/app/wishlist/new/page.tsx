@@ -5,13 +5,15 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
-import { getMembers, createWishlistItem } from '@/lib/api';
-import type { User, Priority } from '@family-inventory/shared';
+import { TagSelector } from '@/components/common/TagSelector';
+import { getMembers, getTags, createWishlistItem } from '@/lib/api';
+import type { User, Priority, Tag } from '@family-inventory/shared';
 
 export default function NewWishlistPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [members, setMembers] = useState<User[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +25,7 @@ export default function NewWishlistPage() {
     priceRange: '',
     url: '',
     memo: '',
+    tagIds: [] as string[],
   });
 
   useEffect(() => {
@@ -39,8 +42,12 @@ export default function NewWishlistPage() {
 
   async function loadData() {
     try {
-      const membersData = await getMembers();
+      const [membersData, tagsData] = await Promise.all([
+        getMembers(),
+        getTags(),
+      ]);
       setMembers(membersData);
+      setTags(tagsData);
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -66,6 +73,7 @@ export default function NewWishlistPage() {
         priceRange: formData.priceRange.trim() || undefined,
         url: formData.url.trim() || undefined,
         memo: formData.memo.trim() || undefined,
+        tags: formData.tagIds,
       });
 
       if (result.success) {
@@ -200,6 +208,18 @@ export default function NewWishlistPage() {
                 rows={3}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="メモを入力..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                タグ
+              </label>
+              <TagSelector
+                availableTags={tags}
+                selectedTagIds={formData.tagIds}
+                onChange={(tagIds) => setFormData((prev) => ({ ...prev, tagIds }))}
+                loading={dataLoading}
               />
             </div>
 

@@ -18,6 +18,7 @@ function toBox(doc: FirebaseFirestore.DocumentSnapshot, familyId: string): Box {
     name: data.name,
     locationId: data.locationId || undefined,
     description: data.description || undefined,
+    tags: data.tags || [],
     createdAt: (data.createdAt as Timestamp).toDate(),
     updatedAt: (data.updatedAt as Timestamp).toDate(),
   };
@@ -41,6 +42,7 @@ export async function createBox(familyId: string, input: CreateBoxInput): Promis
     name: input.name,
     locationId: input.locationId || null,
     description: input.description || null,
+    tags: input.tags || [],
     createdAt: now,
     updatedAt: now,
   };
@@ -53,6 +55,7 @@ export async function createBox(familyId: string, input: CreateBoxInput): Promis
     name: input.name,
     locationId: input.locationId,
     description: input.description,
+    tags: input.tags || [],
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -75,6 +78,7 @@ export async function updateBox(
   if (input.name !== undefined) updateData.name = input.name;
   if (input.locationId !== undefined) updateData.locationId = input.locationId;
   if (input.description !== undefined) updateData.description = input.description;
+  if (input.tags !== undefined) updateData.tags = input.tags;
 
   await docRef.update(updateData);
   return getBoxById(familyId, id);

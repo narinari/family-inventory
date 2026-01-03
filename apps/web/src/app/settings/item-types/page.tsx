@@ -5,17 +5,19 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
-import { getItemTypes, createItemType, updateItemType, deleteItemType } from '@/lib/api';
-import type { ItemType } from '@family-inventory/shared';
+import { TagSelector } from '@/components/common/TagSelector';
+import { getItemTypes, getTags, createItemType, updateItemType, deleteItemType } from '@/lib/api';
+import type { ItemType, Tag } from '@family-inventory/shared';
 
 export default function ItemTypesPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [itemTypes, setItemTypes] = useState<ItemType[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [modal, setModal] = useState<{ mode: 'create' | 'edit'; itemType?: ItemType } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<ItemType | null>(null);
-  const [formData, setFormData] = useState({ name: '', manufacturer: '', description: '' });
+  const [formData, setFormData] = useState({ name: '', manufacturer: '', description: '', tagIds: [] as string[] });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,8 +35,9 @@ export default function ItemTypesPage() {
 
   async function loadData() {
     try {
-      const data = await getItemTypes();
-      setItemTypes(data);
+      const [itemTypesData, tagsData] = await Promise.all([getItemTypes(), getTags()]);
+      setItemTypes(itemTypesData);
+      setTags(tagsData);
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -43,7 +46,7 @@ export default function ItemTypesPage() {
   }
 
   function openCreateModal() {
-    setFormData({ name: '', manufacturer: '', description: '' });
+    setFormData({ name: '', manufacturer: '', description: '', tagIds: [] });
     setError(null);
     setModal({ mode: 'create' });
   }
@@ -53,6 +56,7 @@ export default function ItemTypesPage() {
       name: itemType.name,
       manufacturer: itemType.manufacturer ?? '',
       description: itemType.description ?? '',
+      tagIds: itemType.tags ?? [],
     });
     setError(null);
     setModal({ mode: 'edit', itemType });
@@ -73,6 +77,7 @@ export default function ItemTypesPage() {
         name: formData.name.trim(),
         manufacturer: formData.manufacturer.trim() || undefined,
         description: formData.description.trim() || undefined,
+        tags: formData.tagIds.length > 0 ? formData.tagIds : undefined,
       };
 
       let result;
@@ -232,6 +237,17 @@ export default function ItemTypesPage() {
                   rows={2}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="説明（任意）"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  タグ
+                </label>
+                <TagSelector
+                  availableTags={tags}
+                  selectedTagIds={formData.tagIds}
+                  onChange={(tagIds) => setFormData((prev) => ({ ...prev, tagIds }))}
                 />
               </div>
 
