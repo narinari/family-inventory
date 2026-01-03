@@ -11,7 +11,7 @@
 | 共有型定義 | 完了 | auth.ts, inventory.ts |
 | API認証 | 完了 | login, join, me, members, invite |
 | Web認証UI | 完了 | GoogleLogin, InviteCodeForm |
-| Firestoreルール | 未着手 | - |
+| Firestoreルール | 完了 | firestore.rules, テスト付き |
 | 持ち物管理API | 完了 | items, boxes, locations, wishlist, tags, item-types |
 | 持ち物管理Web | 完了 | 一覧・詳細・編集画面 |
 | Discord Bot | 完了 | 基本コマンド + 拡張コマンド + NLP |
@@ -24,7 +24,7 @@
 
 **優先度**: 高
 **依存**: なし
-**ステータス**: 未着手
+**ステータス**: 完了（auth.ts, inventory.ts に統合実装）
 
 #### 概要
 `packages/shared` に全エンティティの型定義を追加する。
@@ -51,17 +51,17 @@
 
 **優先度**: 高
 **依存**: TASK-001
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 Firestoreのセキュリティルールを設定し、familyIdベースのマルチテナント分離を実装する。
 
 #### 詳細タスク
-- [ ] `firestore.rules` ファイル作成
-- [ ] 認証必須ルールの設定
-- [ ] familyIdによるアクセス制御
-- [ ] ロール（admin/member）による権限制御
-- [ ] ルールのテスト
+- [x] `firestore.rules` ファイル作成
+- [x] 認証必須ルールの設定
+- [x] familyIdによるアクセス制御
+- [x] ロール（admin/member）による権限制御
+- [x] ルールのテスト（tests/firestore-rules/）
 
 #### 参照
 - `architecture-design.md` 11. 権限設計
