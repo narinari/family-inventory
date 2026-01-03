@@ -74,19 +74,19 @@ Firestoreのセキュリティルールを設定し、familyIdベースのマル
 
 **優先度**: 高
 **依存**: なし
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 Discord Botの基盤を構築する。
 
 #### 詳細タスク
-- [ ] `apps/bot` ディレクトリ作成
-- [ ] package.json（discord.js v14）
-- [ ] tsconfig.json
-- [ ] 環境変数設定（BOT_TOKEN等）
-- [ ] `src/index.ts` - Botエントリーポイント
-- [ ] `src/lib/api-client.ts` - 内部API呼び出しクライアント
-- [ ] Dockerfile（Cloud Run用）
+- [x] `apps/bot` ディレクトリ作成
+- [x] package.json（discord.js v14）
+- [x] tsconfig.json
+- [x] 環境変数設定（BOT_TOKEN等）
+- [x] `src/index.ts` - Botエントリーポイント
+- [x] `src/lib/api-client.ts` - 内部API呼び出しクライアント
+- [x] Dockerfile（Cloud Run用）
 
 #### ディレクトリ構成
 ```
@@ -121,11 +121,11 @@ WebユーザーとDiscord IDを紐づけるAPIを実装する。
 | DELETE | /auth/discord | Discord連携解除 |
 
 #### 詳細タスク
-- [ ] Discord OAuth2設定（Discord Developer Portal）
-- [ ] `GET /auth/discord` - 認証URLを返す
-- [ ] `POST /auth/discord/callback` - codeからDiscord IDを取得しユーザーに保存
-- [ ] `DELETE /auth/discord` - discordIdをnullに更新
-- [ ] auth.service.ts に `updateUserDiscordId` 関数追加
+- [x] Discord OAuth2設定（Discord Developer Portal）
+- [x] `GET /auth/discord` - 認証URLを返す
+- [x] `POST /auth/discord/callback` - codeからDiscord IDを取得しユーザーに保存
+- [x] `DELETE /auth/discord` - discordIdをnullに更新
+- [x] auth.service.ts に `updateUserDiscordId` 関数追加
 
 #### フロー
 ```
@@ -171,11 +171,11 @@ Discord IDからシステムユーザーを特定する機能を実装する。
 Web側にDiscord連携ボタンと状態表示を追加する。
 
 #### 詳細タスク
-- [ ] `/settings` ページ作成（または既存に追加）
-- [ ] Discord連携ボタンコンポーネント
-- [ ] 連携状態表示（連携済み/未連携）
-- [ ] 連携解除ボタン
-- [ ] OAuth2コールバック処理ページ
+- [x] `/settings` ページ作成（または既存に追加）
+- [x] Discord連携ボタンコンポーネント
+- [x] 連携状態表示（連携済み/未連携）
+- [x] 連携解除ボタン
+- [x] OAuth2コールバック処理ページ
 
 ---
 
@@ -209,7 +209,7 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 中
 **依存**: TASK-001
-**ステータス**: 部分完了（me, members, invite は実装済み）
+**ステータス**: 完了
 
 #### 概要
 ユーザー管理に関するAPIエンドポイントを実装する。
@@ -218,13 +218,13 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 | メソッド | パス | 説明 | 状況 |
 |----------|------|------|------|
 | GET | /users/me | 自分の情報取得 | 完了 |
-| PUT | /users/me | 自分の情報更新 | 未着手 |
+| PUT | /users/me | 自分の情報更新 | 完了 |
 | GET | /users | 家族メンバー一覧 | 完了 |
 | POST | /users/invite | 招待コード発行 | 完了 |
 | POST | /users/join | 招待コードで参加 | 完了 |
 
-#### 残タスク
-- [ ] `PUT /users/me` - プロフィール更新
+#### 詳細タスク
+- [x] `PUT /users/me` - プロフィール更新
 
 ---
 
@@ -232,7 +232,7 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 中
 **依存**: TASK-001
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 アイテム種別（マスター）のCRUD APIを実装する。
@@ -246,10 +246,10 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 | DELETE | /item-types/:id | 削除 |
 
 #### 詳細タスク
-- [ ] `routes/item-types.ts` 作成
-- [ ] `services/item-type.service.ts` 作成
-- [ ] リクエストバリデーション
-- [ ] 削除時の参照チェック
+- [x] `routes/item-types.ts` 作成
+- [x] `services/item-type.service.ts` 作成
+- [x] リクエストバリデーション
+- [x] 削除時の参照チェック
 
 ---
 
@@ -257,7 +257,7 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 中
 **依存**: TASK-102
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 持ち物のCRUDおよびステータス変更APIを実装する。
@@ -274,11 +274,11 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 | GET | /items/:id/location | どこにあるか取得 |
 
 #### 詳細タスク
-- [ ] `routes/items.ts` 作成
-- [ ] `services/item.service.ts` 作成
-- [ ] フィルタ・検索ロジック
-- [ ] ステータス遷移ロジック
-- [ ] 場所検索ロジック（箱 → 保管場所の解決）
+- [x] `routes/items.ts` 作成
+- [x] `services/item.service.ts` 作成
+- [x] フィルタ・検索ロジック
+- [x] ステータス遷移ロジック
+- [x] 場所検索ロジック（箱 → 保管場所の解決）
 
 #### 参照
 - `requirements.md` 7. 持ち物のライフサイクル
@@ -289,7 +289,7 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 中
 **依存**: TASK-001
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 箱のCRUDおよび中身一覧APIを実装する。
@@ -304,9 +304,9 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 | GET | /boxes/:id/items | 箱の中身一覧 |
 
 #### 詳細タスク
-- [ ] `routes/boxes.ts` 作成
-- [ ] `services/box.service.ts` 作成
-- [ ] 削除時の格納アイテムチェック
+- [x] `routes/boxes.ts` 作成
+- [x] `services/box.service.ts` 作成
+- [x] 削除時の格納アイテムチェック
 
 ---
 
@@ -314,7 +314,7 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 中
 **依存**: TASK-001
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 保管場所のCRUDおよび箱一覧APIを実装する。
@@ -329,8 +329,8 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 | GET | /locations/:id/boxes | 場所内の箱一覧 |
 
 #### 詳細タスク
-- [ ] `routes/locations.ts` 作成
-- [ ] `services/location.service.ts` 作成
+- [x] `routes/locations.ts` 作成
+- [x] `services/location.service.ts` 作成
 
 ---
 
@@ -338,7 +338,7 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 中
 **依存**: TASK-001
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 タグのCRUD APIを実装する。
@@ -348,11 +348,12 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 |----------|------|------|
 | GET | /tags | 一覧取得 |
 | POST | /tags | 新規作成 |
+| PUT | /tags/:id | 更新 |
 | DELETE | /tags/:id | 削除 |
 
 #### 詳細タスク
-- [ ] `routes/tags.ts` 作成
-- [ ] `services/tag.service.ts` 作成
+- [x] `routes/tags.ts` 作成
+- [x] `services/tag.service.ts` 作成
 
 ---
 
@@ -360,7 +361,7 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 中
 **依存**: TASK-103
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 購入予定リストのCRUDおよび購入完了→持ち物連携APIを実装する。
@@ -375,9 +376,9 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 | POST | /wishlist/:id/cancel | 見送り |
 
 #### 詳細タスク
-- [ ] `routes/wishlist.ts` 作成
-- [ ] `services/wishlist.service.ts` 作成
-- [ ] 購入完了時の持ち物自動登録ロジック
+- [x] `routes/wishlist.ts` 作成
+- [x] `services/wishlist.service.ts` 作成
+- [x] 購入完了時の持ち物自動登録ロジック
 
 #### 参照
 - `requirements.md` 8.7 購入予定 → 持ち物 への連携
@@ -390,16 +391,16 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 中
 **依存**: TASK-103
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 ログイン後のホーム画面を実装する。
 
 #### 詳細タスク
-- [ ] `/dashboard` ページ作成
-- [ ] 持ち物サマリ表示
-- [ ] 最近追加した持ち物
-- [ ] 購入予定リストの概要
+- [x] `/` トップページ作成（ダッシュボード）
+- [x] 持ち物サマリ表示
+- [x] 最近追加した持ち物
+- [x] 購入予定リストの概要
 
 ---
 
@@ -407,17 +408,17 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 中
 **依存**: TASK-103
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 持ち物の一覧・検索・登録・編集画面を実装する。
 
 #### 詳細タスク
-- [ ] `/items` 一覧ページ
-- [ ] `/items/new` 新規登録ページ
-- [ ] `/items/[id]` 詳細・編集ページ
-- [ ] フィルタ・検索機能
-- [ ] ステータス変更モーダル（消費/譲渡/売却）
+- [x] `/items` 一覧ページ
+- [x] `/items/new` 新規登録ページ
+- [x] `/items/detail` 詳細・編集ページ
+- [x] フィルタ・検索機能
+- [x] ステータス変更モーダル（消費/譲渡/売却）
 
 ---
 
@@ -425,17 +426,17 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 中
 **依存**: TASK-104, TASK-105
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 箱と保管場所の管理画面を実装する。
 
 #### 詳細タスク
-- [ ] `/boxes` 箱一覧ページ
-- [ ] `/boxes/[id]` 箱詳細（中身一覧）ページ
-- [ ] `/locations` 保管場所一覧ページ
-- [ ] `/locations/[id]` 場所詳細（箱一覧）ページ
-- [ ] 新規作成・編集モーダル
+- [x] `/boxes` 箱一覧ページ
+- [x] `/boxes/detail` 箱詳細（中身一覧）ページ
+- [x] `/locations` 保管場所一覧ページ
+- [x] `/locations/detail` 場所詳細（箱一覧）ページ
+- [x] 新規作成・編集モーダル
 
 ---
 
@@ -443,17 +444,17 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 中
 **依存**: TASK-107
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 購入予定リストの管理画面を実装する。
 
 #### 詳細タスク
-- [ ] `/wishlist` 一覧ページ
-- [ ] `/wishlist/new` 新規追加ページ
-- [ ] `/wishlist/[id]` 詳細・編集ページ
-- [ ] 購入完了アクション
-- [ ] 優先度フィルタ
+- [x] `/wishlist` 一覧ページ
+- [x] `/wishlist/new` 新規追加ページ
+- [x] `/wishlist/detail` 詳細・編集ページ
+- [x] 購入完了アクション
+- [x] 優先度フィルタ
 
 ---
 
@@ -461,17 +462,17 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 中
 **依存**: TASK-101, TASK-D04
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 ユーザー設定・家族メンバー管理画面を実装する。
 
 #### 詳細タスク
-- [ ] `/settings` 設定ページ
-- [ ] `/settings/profile` プロフィール編集
-- [ ] `/settings/members` メンバー一覧（管理者のみ）
-- [ ] 招待コード発行機能
-- [ ] Discord連携UI（TASK-D04と統合）
+- [x] `/settings` 設定ページ
+- [x] `/settings/profile` プロフィール編集
+- [x] `/settings/members` メンバー一覧（管理者のみ）
+- [x] 招待コード発行機能
+- [x] Discord連携UI（TASK-D04と統合）
 
 ---
 
@@ -479,15 +480,15 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 低
 **依存**: TASK-102, TASK-106
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 アイテム種別・タグのマスター管理画面を実装する。
 
 #### 詳細タスク
-- [ ] `/settings/item-types` アイテム種別一覧
-- [ ] `/settings/tags` タグ一覧
-- [ ] 新規作成・編集・削除機能
+- [x] `/settings/item-types` アイテム種別一覧
+- [x] `/settings/tags` タグ一覧
+- [x] 新規作成・編集・削除機能
 
 ---
 
@@ -910,3 +911,6 @@ Phase 4: Bot拡張
 | v1.0 | 2026-01-01 | 初版作成（Discord連携を優先タスクとして整理） |
 | v1.1 | 2026-01-03 | TASK-301〜304 完了（Bot拡張コマンド + NLP） |
 | v1.2 | 2026-01-03 | Phase 6 追加（機能改善 TASK-501〜509） |
+| v1.3 | 2026-01-03 | Phase 1 完了（TASK-D01〜D05 全タスク完了） |
+| v1.4 | 2026-01-03 | Phase 2 完了（TASK-101〜107 全API実装済み） |
+| v1.5 | 2026-01-03 | Phase 3 完了（TASK-201〜206 全Web画面実装済み） |
