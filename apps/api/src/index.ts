@@ -7,6 +7,7 @@ import boxesRoutes from './routes/boxes.js';
 import locationsRoutes from './routes/locations.js';
 import tagsRoutes from './routes/tags.js';
 import wishlistRoutes from './routes/wishlist.js';
+import botRoutes from './routes/bot.js';
 
 const app: Express = express();
 const PORT = process.env.PORT || 8080;
@@ -39,6 +40,7 @@ app.use('/boxes', boxesRoutes);
 app.use('/locations', locationsRoutes);
 app.use('/tags', tagsRoutes);
 app.use('/wishlist', wishlistRoutes);
+app.use('/bot', botRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({
