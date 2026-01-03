@@ -234,6 +234,7 @@ export async function getItemLocation(familyId: string, id: string): Promise<Ite
         name: boxData.name,
         locationId: boxData.locationId || undefined,
         description: boxData.description || undefined,
+        tags: boxData.tags || [],
         createdAt: (boxData.createdAt as Timestamp).toDate(),
         updatedAt: (boxData.updatedAt as Timestamp).toDate(),
       };
@@ -248,6 +249,7 @@ export async function getItemLocation(familyId: string, id: string): Promise<Ite
             name: locationData.name,
             address: locationData.address || undefined,
             description: locationData.description || undefined,
+            tags: locationData.tags || [],
             createdAt: (locationData.createdAt as Timestamp).toDate(),
             updatedAt: (locationData.updatedAt as Timestamp).toDate(),
           };

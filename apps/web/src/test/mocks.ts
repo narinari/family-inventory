@@ -35,6 +35,7 @@ export const mockBox: Box = {
   id: 'box-1',
   familyId: 'family-1',
   name: 'Test Box',
+  tags: [],
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -43,6 +44,7 @@ export const mockLocation: Location = {
   id: 'location-1',
   familyId: 'family-1',
   name: 'Test Location',
+  tags: [],
   createdAt: new Date(),
   updatedAt: new Date(),
 };

@@ -101,6 +101,7 @@ export interface Box {
   name: string;
   locationId?: string;
   description?: string;
+  tags: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -109,12 +110,14 @@ export interface CreateBoxInput {
   name: string;
   locationId?: string;
   description?: string;
+  tags?: string[];
 }
 
 export interface UpdateBoxInput {
   name?: string;
   locationId?: string;
   description?: string;
+  tags?: string[];
 }
 
 // ============================================
@@ -127,6 +130,7 @@ export interface Location {
   name: string;
   address?: string;
   description?: string;
+  tags: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -135,12 +139,14 @@ export interface CreateLocationInput {
   name: string;
   address?: string;
   description?: string;
+  tags?: string[];
 }
 
 export interface UpdateLocationInput {
   name?: string;
   address?: string;
   description?: string;
+  tags?: string[];
 }
 
 // ============================================

@@ -18,6 +18,7 @@ function toLocation(doc: FirebaseFirestore.DocumentSnapshot, familyId: string): 
     name: data.name,
     address: data.address || undefined,
     description: data.description || undefined,
+    tags: data.tags || [],
     createdAt: (data.createdAt as Timestamp).toDate(),
     updatedAt: (data.updatedAt as Timestamp).toDate(),
   };
@@ -41,6 +42,7 @@ export async function createLocation(familyId: string, input: CreateLocationInpu
     name: input.name,
     address: input.address || null,
     description: input.description || null,
+    tags: input.tags || [],
     createdAt: now,
     updatedAt: now,
   };
@@ -53,6 +55,7 @@ export async function createLocation(familyId: string, input: CreateLocationInpu
     name: input.name,
     address: input.address,
     description: input.description,
+    tags: input.tags || [],
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -75,6 +78,7 @@ export async function updateLocation(
   if (input.name !== undefined) updateData.name = input.name;
   if (input.address !== undefined) updateData.address = input.address;
   if (input.description !== undefined) updateData.description = input.description;
+  if (input.tags !== undefined) updateData.tags = input.tags;
 
   await docRef.update(updateData);
   return getLocationById(familyId, id);
@@ -113,6 +117,7 @@ export async function getLocationBoxes(familyId: string, locationId: string): Pr
       name: data.name,
       locationId: data.locationId || undefined,
       description: data.description || undefined,
+      tags: data.tags || [],
       createdAt: (data.createdAt as Timestamp).toDate(),
       updatedAt: (data.updatedAt as Timestamp).toDate(),
     } as Box;

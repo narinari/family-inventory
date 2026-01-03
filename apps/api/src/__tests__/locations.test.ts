@@ -58,6 +58,7 @@ describe('Locations API', () => {
     name: '納戸',
     address: '自宅1階',
     description: '季節物置き場',
+    tags: [],
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -106,6 +107,24 @@ describe('Locations API', () => {
       expect(response.status).toBe(400);
       expect(response.body.error.code).toBe('VALIDATION_ERROR');
     });
+
+    it('should create location with tags', async () => {
+      mockGetUserByUid.mockResolvedValue(mockUser);
+      const locationWithTags = { ...mockLocation, tags: ['tag-1', 'tag-2'] };
+      mockCreateLocation.mockResolvedValue(locationWithTags);
+
+      const response = await request(app)
+        .post('/locations')
+        .send({ name: '納戸', tags: ['tag-1', 'tag-2'] });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.location.tags).toEqual(['tag-1', 'tag-2']);
+      expect(mockCreateLocation).toHaveBeenCalledWith(
+        mockUser.familyId,
+        expect.objectContaining({ tags: ['tag-1', 'tag-2'] })
+      );
+    });
   });
 
   describe('PUT /locations/:id', () => {
@@ -131,6 +150,37 @@ describe('Locations API', () => {
 
       expect(response.status).toBe(404);
       expect(response.body.error.code).toBe('LOCATION_NOT_FOUND');
+    });
+
+    it('should update location with tags', async () => {
+      mockGetUserByUid.mockResolvedValue(mockUser);
+      const locationWithTags = { ...mockLocation, tags: ['tag-3'] };
+      mockUpdateLocation.mockResolvedValue(locationWithTags);
+
+      const response = await request(app)
+        .put('/locations/loc-1')
+        .send({ tags: ['tag-3'] });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.location.tags).toEqual(['tag-3']);
+      expect(mockUpdateLocation).toHaveBeenCalledWith(
+        mockUser.familyId,
+        'loc-1',
+        expect.objectContaining({ tags: ['tag-3'] })
+      );
+    });
+
+    it('should clear tags with empty array', async () => {
+      mockGetUserByUid.mockResolvedValue(mockUser);
+      const locationWithEmptyTags = { ...mockLocation, tags: [] };
+      mockUpdateLocation.mockResolvedValue(locationWithEmptyTags);
+
+      const response = await request(app)
+        .put('/locations/loc-1')
+        .send({ tags: [] });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.location.tags).toEqual([]);
     });
   });
 

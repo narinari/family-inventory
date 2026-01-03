@@ -5,18 +5,20 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
-import { getBoxes, getLocations, createBox, updateBox, deleteBox } from '@/lib/api';
-import type { Box, Location } from '@family-inventory/shared';
+import { TagSelector } from '@/components/common/TagSelector';
+import { getBoxes, getLocations, getTags, createBox, updateBox, deleteBox } from '@/lib/api';
+import type { Box, Location, Tag } from '@family-inventory/shared';
 
 export default function BoxesPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [boxes, setBoxes] = useState<Box[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [modal, setModal] = useState<{ mode: 'create' | 'edit'; box?: Box } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<Box | null>(null);
-  const [formData, setFormData] = useState({ name: '', locationId: '', description: '' });
+  const [formData, setFormData] = useState({ name: '', locationId: '', description: '', tagIds: [] as string[] });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,9 +36,10 @@ export default function BoxesPage() {
 
   async function loadData() {
     try {
-      const [boxesData, locationsData] = await Promise.all([getBoxes(), getLocations()]);
+      const [boxesData, locationsData, tagsData] = await Promise.all([getBoxes(), getLocations(), getTags()]);
       setBoxes(boxesData);
       setLocations(locationsData);
+      setTags(tagsData);
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -45,7 +48,7 @@ export default function BoxesPage() {
   }
 
   function openCreateModal() {
-    setFormData({ name: '', locationId: '', description: '' });
+    setFormData({ name: '', locationId: '', description: '', tagIds: [] });
     setError(null);
     setModal({ mode: 'create' });
   }
@@ -55,6 +58,7 @@ export default function BoxesPage() {
       name: box.name,
       locationId: box.locationId ?? '',
       description: box.description ?? '',
+      tagIds: box.tags ?? [],
     });
     setError(null);
     setModal({ mode: 'edit', box });
@@ -75,6 +79,7 @@ export default function BoxesPage() {
         name: formData.name.trim(),
         locationId: formData.locationId || undefined,
         description: formData.description.trim() || undefined,
+        tags: formData.tagIds.length > 0 ? formData.tagIds : undefined,
       };
 
       let result;
@@ -240,6 +245,17 @@ export default function BoxesPage() {
                   rows={2}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="箱の説明"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  タグ
+                </label>
+                <TagSelector
+                  availableTags={tags}
+                  selectedTagIds={formData.tagIds}
+                  onChange={(tagIds) => setFormData((prev) => ({ ...prev, tagIds }))}
                 />
               </div>
 

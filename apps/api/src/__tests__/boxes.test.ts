@@ -58,6 +58,7 @@ describe('Boxes API', () => {
     name: 'テストボックス',
     locationId: 'loc-1',
     description: 'テスト説明',
+    tags: [],
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -106,6 +107,24 @@ describe('Boxes API', () => {
       expect(response.status).toBe(400);
       expect(response.body.error.code).toBe('VALIDATION_ERROR');
     });
+
+    it('should create box with tags', async () => {
+      mockGetUserByUid.mockResolvedValue(mockUser);
+      const boxWithTags = { ...mockBox, tags: ['tag-1', 'tag-2'] };
+      mockCreateBox.mockResolvedValue(boxWithTags);
+
+      const response = await request(app)
+        .post('/boxes')
+        .send({ name: 'テストボックス', tags: ['tag-1', 'tag-2'] });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.box.tags).toEqual(['tag-1', 'tag-2']);
+      expect(mockCreateBox).toHaveBeenCalledWith(
+        mockUser.familyId,
+        expect.objectContaining({ tags: ['tag-1', 'tag-2'] })
+      );
+    });
   });
 
   describe('PUT /boxes/:id', () => {
@@ -131,6 +150,37 @@ describe('Boxes API', () => {
 
       expect(response.status).toBe(404);
       expect(response.body.error.code).toBe('BOX_NOT_FOUND');
+    });
+
+    it('should update box with tags', async () => {
+      mockGetUserByUid.mockResolvedValue(mockUser);
+      const boxWithTags = { ...mockBox, tags: ['tag-3'] };
+      mockUpdateBox.mockResolvedValue(boxWithTags);
+
+      const response = await request(app)
+        .put('/boxes/box-1')
+        .send({ tags: ['tag-3'] });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.box.tags).toEqual(['tag-3']);
+      expect(mockUpdateBox).toHaveBeenCalledWith(
+        mockUser.familyId,
+        'box-1',
+        expect.objectContaining({ tags: ['tag-3'] })
+      );
+    });
+
+    it('should clear tags with empty array', async () => {
+      mockGetUserByUid.mockResolvedValue(mockUser);
+      const boxWithEmptyTags = { ...mockBox, tags: [] };
+      mockUpdateBox.mockResolvedValue(boxWithEmptyTags);
+
+      const response = await request(app)
+        .put('/boxes/box-1')
+        .send({ tags: [] });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.box.tags).toEqual([]);
     });
   });
 

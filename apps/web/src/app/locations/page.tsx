@@ -5,18 +5,20 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
-import { getLocations, getBoxes, createLocation, updateLocation, deleteLocation } from '@/lib/api';
-import type { Location, Box } from '@family-inventory/shared';
+import { TagSelector } from '@/components/common/TagSelector';
+import { getLocations, getBoxes, getTags, createLocation, updateLocation, deleteLocation } from '@/lib/api';
+import type { Location, Box, Tag } from '@family-inventory/shared';
 
 export default function LocationsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [locations, setLocations] = useState<Location[]>([]);
   const [boxes, setBoxes] = useState<Box[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [modal, setModal] = useState<{ mode: 'create' | 'edit'; location?: Location } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<Location | null>(null);
-  const [formData, setFormData] = useState({ name: '', address: '', description: '' });
+  const [formData, setFormData] = useState({ name: '', address: '', description: '', tagIds: [] as string[] });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,9 +36,10 @@ export default function LocationsPage() {
 
   async function loadData() {
     try {
-      const [locationsData, boxesData] = await Promise.all([getLocations(), getBoxes()]);
+      const [locationsData, boxesData, tagsData] = await Promise.all([getLocations(), getBoxes(), getTags()]);
       setLocations(locationsData);
       setBoxes(boxesData);
+      setTags(tagsData);
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -45,7 +48,7 @@ export default function LocationsPage() {
   }
 
   function openCreateModal() {
-    setFormData({ name: '', address: '', description: '' });
+    setFormData({ name: '', address: '', description: '', tagIds: [] });
     setError(null);
     setModal({ mode: 'create' });
   }
@@ -55,6 +58,7 @@ export default function LocationsPage() {
       name: location.name,
       address: location.address ?? '',
       description: location.description ?? '',
+      tagIds: location.tags ?? [],
     });
     setError(null);
     setModal({ mode: 'edit', location });
@@ -75,6 +79,7 @@ export default function LocationsPage() {
         name: formData.name.trim(),
         address: formData.address.trim() || undefined,
         description: formData.description.trim() || undefined,
+        tags: formData.tagIds.length > 0 ? formData.tagIds : undefined,
       };
 
       let result;
@@ -241,6 +246,17 @@ export default function LocationsPage() {
                   rows={2}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="保管場所の説明"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  タグ
+                </label>
+                <TagSelector
+                  availableTags={tags}
+                  selectedTagIds={formData.tagIds}
+                  onChange={(tagIds) => setFormData((prev) => ({ ...prev, tagIds }))}
                 />
               </div>
 
