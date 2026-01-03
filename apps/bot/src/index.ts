@@ -1,6 +1,7 @@
 import { Client, Collection, GatewayIntentBits, Events, type ChatInputCommandInteraction } from 'discord.js';
 import { createServer } from 'node:http';
 import { commands } from './commands/index.js';
+import * as messageCreateEvent from './events/messageCreate.js';
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const PORT = process.env.PORT || 8080;
@@ -17,7 +18,11 @@ interface Command {
 }
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
 });
 
 // Register commands
@@ -29,7 +34,11 @@ for (const command of commands) {
 client.once(Events.ClientReady, (readyClient) => {
   console.log(`Bot is ready! Logged in as ${readyClient.user.tag}`);
   console.log(`Registered ${commandCollection.size} commands`);
+  console.log(`NLP enabled: ${process.env.GEMINI_API_KEY ? 'yes' : 'no'}`);
 });
+
+// Message create event for natural language processing
+client.on(Events.MessageCreate, messageCreateEvent.execute);
 
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
