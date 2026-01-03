@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
-import { getWishlistItem, getMembers, updateWishlistItem } from '@/lib/api';
-import type { Wishlist, User, Priority } from '@family-inventory/shared';
+import { TagSelector } from '@/components/common/TagSelector';
+import { getWishlistItem, getMembers, getTags, updateWishlistItem } from '@/lib/api';
+import type { Wishlist, User, Priority, Tag } from '@family-inventory/shared';
 
 export default function WishlistDetailClient() {
   const { user, loading } = useAuth();
@@ -16,6 +17,7 @@ export default function WishlistDetailClient() {
 
   const [wishlistItem, setWishlistItem] = useState<Wishlist | null>(null);
   const [members, setMembers] = useState<User[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -28,6 +30,7 @@ export default function WishlistDetailClient() {
     priceRange: '',
     url: '',
     memo: '',
+    tagIds: [] as string[],
   });
 
   useEffect(() => {
@@ -45,9 +48,10 @@ export default function WishlistDetailClient() {
   async function loadData() {
     if (!wishlistId) return;
     try {
-      const [wishlistData, membersData] = await Promise.all([
+      const [wishlistData, membersData, tagsData] = await Promise.all([
         getWishlistItem(wishlistId),
         getMembers(),
+        getTags(),
       ]);
 
       if (!wishlistData) {
@@ -57,6 +61,7 @@ export default function WishlistDetailClient() {
 
       setWishlistItem(wishlistData);
       setMembers(membersData);
+      setTags(tagsData);
       setFormData({
         name: wishlistData.name,
         requesterId: wishlistData.requesterId,
@@ -64,6 +69,7 @@ export default function WishlistDetailClient() {
         priceRange: wishlistData.priceRange ?? '',
         url: wishlistData.url ?? '',
         memo: wishlistData.memo ?? '',
+        tagIds: wishlistData.tags ?? [],
       });
     } catch (err) {
       console.error('Failed to load data:', err);
@@ -87,6 +93,7 @@ export default function WishlistDetailClient() {
         priceRange: formData.priceRange.trim() || undefined,
         url: formData.url.trim() || undefined,
         memo: formData.memo.trim() || undefined,
+        tags: formData.tagIds,
       });
 
       if (result.success && result.data) {
@@ -255,6 +262,17 @@ export default function WishlistDetailClient() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  タグ
+                </label>
+                <TagSelector
+                  availableTags={tags}
+                  selectedTagIds={formData.tagIds}
+                  onChange={(tagIds) => setFormData((prev) => ({ ...prev, tagIds }))}
+                />
+              </div>
+
               <div className="flex gap-3 justify-end">
                 <button
                   type="button"
@@ -267,6 +285,7 @@ export default function WishlistDetailClient() {
                       priceRange: wishlistItem.priceRange ?? '',
                       url: wishlistItem.url ?? '',
                       memo: wishlistItem.memo ?? '',
+                      tagIds: wishlistItem.tags ?? [],
                     });
                   }}
                   className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
@@ -313,6 +332,24 @@ export default function WishlistDetailClient() {
                 <div>
                   <dt className="text-sm font-medium text-gray-500">メモ</dt>
                   <dd className="mt-1 text-gray-900 whitespace-pre-wrap">{wishlistItem.memo}</dd>
+                </div>
+              )}
+              {wishlistItem.tags && wishlistItem.tags.length > 0 && (
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">タグ</dt>
+                  <dd className="mt-1 flex flex-wrap gap-1">
+                    {wishlistItem.tags.map((tagId) => {
+                      const tag = tags.find((t) => t.id === tagId);
+                      return tag ? (
+                        <span
+                          key={tag.id}
+                          className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700"
+                        >
+                          {tag.name}
+                        </span>
+                      ) : null;
+                    })}
+                  </dd>
                 </div>
               )}
               <div>
