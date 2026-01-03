@@ -45,33 +45,68 @@ ${branch} ブランチへの直接コミットはできません。
   return null;
 }
 
+/**
+ * TASK-XXX パターンを検出してリマインダーを生成
+ */
+function getTaskReminder(prompt: string): string | null {
+  const taskPattern = /TASK-\d+/gi;
+  const matches = prompt.match(taskPattern);
+
+  if (matches && matches.length > 0) {
+    const uniqueTasks = [...new Set(matches.map((m) => m.toUpperCase()))];
+    return `📋 タスク実装リマインダー (${uniqueTasks.join(', ')})
+
+**実装前**: \`docs/TASK_TICKETS.md\` でタスク詳細を確認
+**実装中**: 新機能・API変更にはテストを追加
+**実装後**:
+  - \`docs/TASK_TICKETS.md\` のステータスを「完了」に更新
+  - 詳細タスクのチェックボックスを更新 (\`[ ]\` → \`[x]\`)
+  - テスト実行: \`pnpm --filter api test\`
+  - 型チェック: \`pnpm type-check\``;
+  }
+  return null;
+}
+
+/**
+ * 複数のコンテキストメッセージを結合
+ */
+function combineContexts(...contexts: (string | null | undefined)[]): string | undefined {
+  const validContexts = contexts.filter((c): c is string => !!c);
+  return validContexts.length > 0 ? validContexts.join('\n\n') : undefined;
+}
+
 async function handler(input: SessionStartHookInput): Promise<SessionStartHookOutput> {
   // ブランチ警告をチェック（メモリシステムの有効/無効に関わらず実行）
   const currentBranch = getCurrentBranch();
   const branchWarning = getMainBranchWarning(currentBranch);
 
+  // タスクリマインダーをチェック（メモリシステムの有効/無効に関わらず実行）
+  const prompt = input.prompt || '';
+  const taskReminder = getTaskReminder(prompt);
+
   // メモリシステムが無効の場合
   if (!MEMORY_ENABLED) {
     return {
-      additionalContext: branchWarning || undefined,
+      additionalContext: combineContexts(branchWarning, taskReminder),
       metadata: {
         source: 'session-start',
         disabled: true,
         currentBranch,
         branchWarning: !!branchWarning,
+        taskReminder: !!taskReminder,
       },
     };
   }
 
-  const prompt = input.prompt;
   if (!prompt) {
     return {
-      additionalContext: branchWarning || undefined,
+      additionalContext: combineContexts(branchWarning, taskReminder),
       metadata: {
         source: 'session-start',
         memoriesLoaded: 0,
         currentBranch,
         branchWarning: !!branchWarning,
+        taskReminder: !!taskReminder,
       },
     };
   }
@@ -84,52 +119,39 @@ async function handler(input: SessionStartHookInput): Promise<SessionStartHookOu
   const seenIds = new Set(relevantResults.map((r) => r.memory.id));
   const uniqueRecent = recentMemories.filter((m) => !seenIds.has(m.id));
 
-  // コンテキストがない場合
-  if (relevantResults.length === 0 && uniqueRecent.length === 0) {
-    return {
-      additionalContext: branchWarning || undefined,
-      metadata: {
-        source: 'session-start',
-        memoriesLoaded: 0,
-        currentBranch,
-        branchWarning: !!branchWarning,
-      },
-    };
-  }
+  // メモリコンテキストを構築
+  let memoryContext: string | null = null;
+  if (relevantResults.length > 0 || uniqueRecent.length > 0) {
+    const contextParts: string[] = ['## Relevant Context from Memory System\n'];
 
-  // コンテキストを構築
-  const contextParts: string[] = ['## Relevant Context from Memory System\n'];
-
-  if (relevantResults.length > 0) {
-    contextParts.push('### Relevant Memories');
-    for (const result of relevantResults.slice(0, 3)) {
-      const { memory, score } = result;
-      contextParts.push(`- **${memory.category}** (relevance: ${score.toFixed(2)}): ${memory.content}`);
+    if (relevantResults.length > 0) {
+      contextParts.push('### Relevant Memories');
+      for (const result of relevantResults.slice(0, 3)) {
+        const { memory, score } = result;
+        contextParts.push(`- **${memory.category}** (relevance: ${score.toFixed(2)}): ${memory.content}`);
+      }
     }
-  }
 
-  if (uniqueRecent.length > 0) {
-    contextParts.push('\n### Recent Context');
-    for (const memory of uniqueRecent.slice(0, 2)) {
-      contextParts.push(`- ${memory.category}: ${memory.content}`);
+    if (uniqueRecent.length > 0) {
+      contextParts.push('\n### Recent Context');
+      for (const memory of uniqueRecent.slice(0, 2)) {
+        contextParts.push(`- ${memory.category}: ${memory.content}`);
+      }
     }
+
+    memoryContext = contextParts.join('\n');
   }
 
   const memoriesLoaded = relevantResults.length + uniqueRecent.length;
 
-  // ブランチ警告とメモリコンテキストを結合
-  const memoryContext = contextParts.join('\n');
-  const combinedContext = branchWarning
-    ? `${branchWarning}\n\n${memoryContext}`
-    : memoryContext;
-
   return {
-    additionalContext: combinedContext,
+    additionalContext: combineContexts(branchWarning, taskReminder, memoryContext),
     metadata: {
       source: 'session-start',
       memoriesLoaded,
       currentBranch,
       branchWarning: !!branchWarning,
+      taskReminder: !!taskReminder,
     },
   };
 }
