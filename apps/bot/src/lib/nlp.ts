@@ -70,10 +70,12 @@ export async function parseNaturalLanguage(message: string): Promise<ParsedInten
 
   try {
     const response = await geminiClient.generateContent(message, SYSTEM_PROMPT);
+    console.log('[NLP] Gemini raw response:', response);
 
     // JSONを抽出
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
+      console.log('[NLP] No JSON found in response');
       return {
         intent: 'unknown',
         params: {},
@@ -83,6 +85,7 @@ export async function parseNaturalLanguage(message: string): Promise<ParsedInten
     }
 
     const parsed = JSON.parse(jsonMatch[0]) as ParsedIntent;
+    console.log('[NLP] Parsed intent:', parsed);
 
     // バリデーション
     const validIntents: IntentType[] = [
