@@ -35,7 +35,7 @@ export async function execute(message: Message): Promise<void> {
   }
 
   // 処理中を示すリアクション
-  await message.react('thinking');
+  await message.react('🤔');
 
   try {
     // 自然言語解析
@@ -48,7 +48,7 @@ export async function execute(message: Message): Promise<void> {
     await message.reactions.removeAll();
 
     if (response.success) {
-      await message.react('check');
+      await message.react('✅');
     }
 
     if (response.embed) {
@@ -59,7 +59,7 @@ export async function execute(message: Message): Promise<void> {
   } catch (error) {
     console.error('NLP processing error:', error);
     await message.reactions.removeAll();
-    await message.react('x');
+    await message.react('❌');
     await message.reply('処理中にエラーが発生しました。');
   }
 }
