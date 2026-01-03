@@ -8,13 +8,13 @@
 
 | コンポーネント | 状況 | 備考 |
 |---------------|------|------|
-| 共有型定義 | 部分完了 | auth.ts, inventory.ts（持ち物関連は未実装） |
+| 共有型定義 | 完了 | auth.ts, inventory.ts |
 | API認証 | 完了 | login, join, me, members, invite |
 | Web認証UI | 完了 | GoogleLogin, InviteCodeForm |
 | Firestoreルール | 未着手 | - |
-| 持ち物管理API | 未着手 | - |
-| 持ち物管理Web | 未着手 | - |
-| Discord Bot | 未着手 | - |
+| 持ち物管理API | 完了 | items, boxes, locations, wishlist, tags, item-types |
+| 持ち物管理Web | 完了 | 一覧・詳細・編集画面 |
+| Discord Bot | 完了 | 基本コマンド + 拡張コマンド + NLP |
 
 ---
 
@@ -497,7 +497,7 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 低
 **依存**: TASK-D05, TASK-103
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 持ち物操作のスラッシュコマンドを実装する。
@@ -514,7 +514,9 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 | /item sell | 売却済 |
 
 #### 詳細タスク
-- [ ] `commands/item.ts` 実装
+- [x] `commands/item.ts` 実装
+- [x] Bot専用APIルート (`/bot/*`) 追加
+- [x] ApiClient 拡張
 
 ---
 
@@ -522,7 +524,7 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 低
 **依存**: TASK-D05, TASK-107
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 購入予定リストのスラッシュコマンドを実装する。
@@ -537,7 +539,7 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 | /want detail | 詳細表示 |
 
 #### 詳細タスク
-- [ ] `commands/want.ts` 実装
+- [x] `commands/want.ts` 実装
 
 ---
 
@@ -545,7 +547,7 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 低
 **依存**: TASK-D05, TASK-104, TASK-105
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 箱・保管場所のスラッシュコマンドを実装する。
@@ -556,10 +558,12 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 | /box list | 箱一覧 |
 | /box contents | 箱の中身表示 |
 | /place list | 保管場所一覧 |
+| /place boxes | 場所の箱一覧 |
 
 #### 詳細タスク
-- [ ] `commands/box.ts` 実装
-- [ ] `commands/place.ts` 実装
+- [x] `commands/box.ts` 実装
+- [x] `commands/place.ts` 実装
+- [x] `/help` コマンド更新
 
 ---
 
@@ -567,17 +571,18 @@ Web側にDiscord連携ボタンと状態表示を追加する。
 
 **優先度**: 低
 **依存**: TASK-301, TASK-302
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
-Gemini 2.5 Flash API を使った自然言語処理を実装する。
+Gemini API を使った自然言語処理を実装する。
 
 #### 詳細タスク
-- [ ] Gemini API クライアント実装
-- [ ] 意図解析プロンプト設計
-- [ ] パラメータ抽出ロジック
-- [ ] 操作種別判定
-- [ ] 応答生成
+- [x] Gemini API クライアント実装 (`lib/gemini.ts`)
+- [x] 意図解析プロンプト設計 (`lib/nlp.ts`)
+- [x] パラメータ抽出ロジック
+- [x] 操作種別判定
+- [x] 応答生成
+- [x] messageCreate イベントハンドラ (`events/messageCreate.ts`)
 
 #### 対応する自然言語操作
 - 場所検索（「○○どこ？」）
@@ -588,7 +593,10 @@ Gemini 2.5 Flash API を使った自然言語処理を実装する。
 - 譲渡（「○○あげた」）
 - 売却（「○○売った」）
 - 一覧表示（「○○の一覧見せて」）
-- 格納先変更（「○○を△△に入れた」）
+- 格納先変更（「○○を△△に入れた」）※開発中
+
+#### 環境変数
+- `GEMINI_API_KEY` - 自然言語処理を有効にする場合に設定
 
 #### 参照
 - `architecture-design.md` 3.3 Discord Bot 処理フロー
@@ -741,3 +749,4 @@ Phase 4: Bot拡張
 | バージョン | 日付 | 変更内容 |
 |-----------|------|---------|
 | v1.0 | 2026-01-01 | 初版作成（Discord連携を優先タスクとして整理） |
+| v1.1 | 2026-01-03 | TASK-301〜304 完了（Bot拡張コマンド + NLP） |
