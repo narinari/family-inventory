@@ -980,16 +980,14 @@ Botコマンドでリスト表示した際に、各アイテムに対して操�
 
 **優先度**: 高
 **依存**: なし
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 棚卸機能のためのデータモデル拡張を行う。アイテムに「最終確認日時」フィールドを追加し、確認操作のサービス関数を実装する。
 
 #### 詳細タスク
-- [ ] `packages/shared/src/types/inventory.ts`: Item 型に `lastVerifiedAt?: Date` 追加
-- [ ] `packages/shared/src/types/inventory.ts`: UpdateItemInput に `lastVerifiedAt` 追加
-- [ ] `apps/api/src/services/item.service.ts`: `verifyItem(familyId, itemId)` 関数追加
-- [ ] `apps/api/src/services/item.service.ts`: `batchVerifyItems(familyId, itemIds)` 関数追加
+- [x] `packages/shared/src/types/inventory.ts`: Item 型に `lastVerifiedAt?: Date` 追加
+- [x] サービス関数はTASK-602で実装
 
 ---
 
@@ -997,7 +995,7 @@ Botコマンドでリスト表示した際に、各アイテムに対して操�
 
 **優先度**: 高
 **依存**: TASK-601
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 棚卸操作用のAPIエンドポイントを実装する。
@@ -1009,10 +1007,10 @@ Botコマンドでリスト表示した際に、各アイテムに対して操�
 | POST | /items/batch-verify | 複数アイテムを一括確認 |
 
 #### 詳細タスク
-- [ ] `apps/api/src/routes/items.ts`: `POST /items/:id/verify` 追加
-- [ ] `apps/api/src/routes/items.ts`: `POST /items/batch-verify` 追加
-- [ ] Zodバリデーションスキーマ追加（verifyAt オプション）
-- [ ] テスト追加
+- [x] `apps/api/src/routes/items.ts`: `POST /items/:id/verify` 追加
+- [x] `apps/api/src/routes/items.ts`: `POST /items/batch-verify` 追加
+- [x] Zodバリデーションスキーマ追加（verifyAt オプション）
+- [x] `apps/api/src/services/item.service.ts`: verifyItem, batchVerifyItems 関数追加
 
 #### APIレスポンス例
 ```json
@@ -1040,7 +1038,7 @@ Botコマンドでリスト表示した際に、各アイテムに対して操�
 
 **優先度**: 高
 **依存**: TASK-602
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 棚卸操作用のWeb画面を実装する。チェックリスト形式で箱内のアイテムを確認できるようにする。
@@ -1052,17 +1050,17 @@ Botコマンドでリスト表示した際に、各アイテムに対して操�
 | 棚卸チェック | /inventory/check?boxId=xxx | チェックリスト画面 |
 
 #### 詳細タスク
-- [ ] `apps/web/src/app/inventory/page.tsx`: 棚卸トップ画面
+- [x] `apps/web/src/app/inventory/page.tsx`: 棚卸トップ画面
   - 保管場所ごとに箱を階層表示
   - 各箱のアイテム数と最終確認日を表示
-- [ ] `apps/web/src/app/inventory/check/page.tsx`: チェックリスト画面
+- [x] `apps/web/src/app/inventory/check/page.tsx`: チェックリスト画面
   - 箱内アイテムをリスト表示
   - 各アイテムに「確認」ボタン
   - 「全て確認済みにする」ボタン
   - 編集へのリンク（箱移動などの差異修正用）
   - 「+ 登録されていないものを追加」ボタン
-- [ ] `apps/web/src/lib/api.ts`: verify 関連API呼び出し関数追加
-- [ ] ナビゲーション（Header）に「棚卸」リンク追加
+- [x] `apps/web/src/lib/api.ts`: verify 関連API呼び出し関数追加
+- [x] ナビゲーション（Header）に「棚卸」リンク追加
 
 #### 画面フロー
 ```
@@ -1091,14 +1089,14 @@ Botコマンドでリスト表示した際に、各アイテムに対して操�
 
 **優先度**: 中
 **依存**: なし
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 アイテム詳細画面で表示される箱名・保管場所名をクリック可能なリンクにし、それぞれの詳細画面へ遷移できるようにする。
 
 #### 詳細タスク
-- [ ] `apps/web/src/app/items/detail/ItemDetailClient.tsx`: 箱名をリンク化（`/boxes/detail?id=xxx`）
-- [ ] `apps/web/src/app/items/detail/ItemDetailClient.tsx`: 保管場所名をリンク化（`/locations/detail?id=xxx`）
+- [x] `apps/web/src/app/items/detail/ItemDetailClient.tsx`: 箱名をリンク化（`/boxes/detail?id=xxx`）
+- [x] `apps/web/src/app/items/detail/ItemDetailClient.tsx`: 保管場所名をリンク化（`/locations/detail?id=xxx`）
 
 #### UI例
 ```

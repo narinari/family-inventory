@@ -273,8 +273,17 @@ export default function ItemDetailClient() {
                 <dd className="mt-1 text-gray-900">
                   {box ? (
                     <>
-                      {box.name}
-                      {location && <span className="text-gray-500 ml-2">({location.name})</span>}
+                      <Link href={`/boxes/detail?id=${box.id}`} className="text-primary-600 hover:text-primary-700">
+                        {box.name}
+                      </Link>
+                      {location && (
+                        <Link
+                          href={`/locations/detail?id=${location.id}`}
+                          className="text-gray-500 hover:text-primary-600 ml-2"
+                        >
+                          ({location.name})
+                        </Link>
+                      )}
                     </>
                   ) : (
                     '未設定'

@@ -46,6 +46,7 @@ function toItem(doc: FirebaseFirestore.DocumentSnapshot, familyId: string): Item
     givenTo: data.givenTo || undefined,
     soldTo: data.soldTo || undefined,
     soldPrice: data.soldPrice || undefined,
+    lastVerifiedAt: data.lastVerifiedAt ? (data.lastVerifiedAt as Timestamp).toDate() : undefined,
     createdAt: (data.createdAt as Timestamp).toDate(),
     updatedAt: (data.updatedAt as Timestamp).toDate(),
   };
@@ -268,6 +269,50 @@ export async function sellItem(
   });
 
   return getItemById(familyId, id);
+}
+
+export async function verifyItem(
+  familyId: string,
+  id: string,
+  verifyAt?: Date
+): Promise<Item | null> {
+  const docRef = getItemsCollection(familyId).doc(id);
+  const doc = await docRef.get();
+
+  if (!doc.exists) return null;
+
+  await docRef.update({
+    lastVerifiedAt: verifyAt ? Timestamp.fromDate(verifyAt) : FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  return getItemById(familyId, id);
+}
+
+export async function batchVerifyItems(
+  familyId: string,
+  ids: string[],
+  verifyAt?: Date
+): Promise<{ verifiedCount: number; items: Item[] }> {
+  const collection = getItemsCollection(familyId);
+  const batch = db.batch();
+  const timestamp = verifyAt ? Timestamp.fromDate(verifyAt) : FieldValue.serverTimestamp();
+
+  for (const id of ids) {
+    const docRef = collection.doc(id);
+    batch.update(docRef, {
+      lastVerifiedAt: timestamp,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  }
+
+  await batch.commit();
+
+  // 更新されたアイテムを取得
+  const items = await Promise.all(ids.map((id) => getItemById(familyId, id)));
+  const validItems = items.filter((item): item is Item => item !== null);
+
+  return { verifiedCount: validItems.length, items: validItems };
 }
 
 export async function getItemLocation(familyId: string, id: string): Promise<ItemLocation | null> {

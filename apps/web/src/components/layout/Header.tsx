@@ -26,6 +26,7 @@ export function Header() {
             <NavLink href="/boxes">箱</NavLink>
             <NavLink href="/locations">保管場所</NavLink>
             <NavLink href="/wishlist">欲しい物</NavLink>
+            <NavLink href="/inventory">棚卸</NavLink>
           </nav>
 
           <div className="relative">
@@ -77,6 +78,7 @@ export function Header() {
           <MobileNavLink href="/items" icon="📦" label="持ち物" />
           <MobileNavLink href="/boxes" icon="🗃️" label="箱" />
           <MobileNavLink href="/wishlist" icon="📝" label="欲しい物" />
+          <MobileNavLink href="/inventory" icon="📋" label="棚卸" />
         </div>
       </nav>
     </header>
