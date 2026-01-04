@@ -976,6 +976,117 @@ Botコマンドでリスト表示した際に、各アイテムに対して操�
 
 ---
 
+### TASK-601: 棚卸機能 - データモデル拡張
+
+**優先度**: 高
+**依存**: なし
+**ステータス**: 未着手
+
+#### 概要
+棚卸機能のためのデータモデル拡張を行う。アイテムに「最終確認日時」フィールドを追加し、確認操作のサービス関数を実装する。
+
+#### 詳細タスク
+- [ ] `packages/shared/src/types/inventory.ts`: Item 型に `lastVerifiedAt?: Date` 追加
+- [ ] `packages/shared/src/types/inventory.ts`: UpdateItemInput に `lastVerifiedAt` 追加
+- [ ] `apps/api/src/services/item.service.ts`: `verifyItem(familyId, itemId)` 関数追加
+- [ ] `apps/api/src/services/item.service.ts`: `batchVerifyItems(familyId, itemIds)` 関数追加
+
+---
+
+### TASK-602: 棚卸機能 - API実装
+
+**優先度**: 高
+**依存**: TASK-601
+**ステータス**: 未着手
+
+#### 概要
+棚卸操作用のAPIエンドポイントを実装する。
+
+#### エンドポイント
+| メソッド | パス | 説明 |
+|----------|------|------|
+| POST | /items/:id/verify | 1件のアイテムを確認済みにする |
+| POST | /items/batch-verify | 複数アイテムを一括確認 |
+
+#### 詳細タスク
+- [ ] `apps/api/src/routes/items.ts`: `POST /items/:id/verify` 追加
+- [ ] `apps/api/src/routes/items.ts`: `POST /items/batch-verify` 追加
+- [ ] Zodバリデーションスキーマ追加（verifyAt オプション）
+- [ ] テスト追加
+
+#### APIレスポンス例
+```json
+// POST /items/:id/verify
+{
+  "success": true,
+  "data": {
+    "item": { "id": "xxx", "lastVerifiedAt": "2026-01-04T12:00:00Z", ... }
+  }
+}
+
+// POST /items/batch-verify
+{
+  "success": true,
+  "data": {
+    "verifiedCount": 5,
+    "items": [...]
+  }
+}
+```
+
+---
+
+### TASK-603: 棚卸機能 - Web画面実装
+
+**優先度**: 高
+**依存**: TASK-602
+**ステータス**: 未着手
+
+#### 概要
+棚卸操作用のWeb画面を実装する。チェックリスト形式で箱内のアイテムを確認できるようにする。
+
+#### 画面構成
+| ページ | パス | 機能 |
+|--------|------|------|
+| 棚卸トップ | /inventory | 保管場所・箱の選択画面 |
+| 棚卸チェック | /inventory/check?boxId=xxx | チェックリスト画面 |
+
+#### 詳細タスク
+- [ ] `apps/web/src/app/inventory/page.tsx`: 棚卸トップ画面
+  - 保管場所ごとに箱を階層表示
+  - 各箱のアイテム数と最終確認日を表示
+- [ ] `apps/web/src/app/inventory/check/page.tsx`: チェックリスト画面
+  - 箱内アイテムをリスト表示
+  - 各アイテムに「確認」ボタン
+  - 「全て確認済みにする」ボタン
+  - 編集へのリンク（箱移動などの差異修正用）
+  - 「+ 登録されていないものを追加」ボタン
+- [ ] `apps/web/src/lib/api.ts`: verify 関連API呼び出し関数追加
+- [ ] ナビゲーション（Header）に「棚卸」リンク追加
+
+#### 画面フロー
+```
+/inventory（棚卸トップ）
+  ├── 保管場所A
+  │   ├── 箱1 (5点) - 最終確認: 3日前  [棚卸開始]
+  │   └── 箱2 (12点) - 未確認          [棚卸開始]
+  └── 保管場所B
+      └── 箱3 (3点) - 最終確認: 今日   [棚卸開始]
+
+↓ 箱を選択
+
+/inventory/check?boxId=xxx（チェック画面）
+  ┌─────────────────────────────────────┐
+  │ ☐ USBケーブル      [確認] [編集]    │
+  │ ☑ マウス           [確認済]         │
+  │ ☐ ACアダプタ       [確認] [編集]    │
+  └─────────────────────────────────────┘
+  [+ 登録されていないものを追加]
+  [全て確認済みにする]
+```
+
+---
+
 ## 改訂履歴
 
 | バージョン | 日付 | 変更内容 |
@@ -988,3 +1099,4 @@ Botコマンドでリスト表示した際に、各アイテムに対して操�
 | v1.5 | 2026-01-03 | Phase 3 完了（TASK-201〜206 全Web画面実装済み） |
 | v1.6 | 2026-01-04 | TASK-510, TASK-511 追加（Bot購入予定検索、Web購入予定タグ付け） |
 | v1.7 | 2026-01-04 | TASK-512 追加（Botリスト表示のインタラクティブ化 - 操作ボタン・Webリンク） |
+| v1.8 | 2026-01-04 | TASK-601〜603 追加（棚卸機能） |
