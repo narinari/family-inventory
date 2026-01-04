@@ -1091,14 +1091,14 @@ Botコマンドでリスト表示した際に、各アイテムに対して操�
 
 **優先度**: 中
 **依存**: なし
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 アイテム詳細画面で表示される箱名・保管場所名をクリック可能なリンクにし、それぞれの詳細画面へ遷移できるようにする。
 
 #### 詳細タスク
-- [ ] `apps/web/src/app/items/detail/ItemDetailClient.tsx`: 箱名をリンク化（`/boxes/detail?id=xxx`）
-- [ ] `apps/web/src/app/items/detail/ItemDetailClient.tsx`: 保管場所名をリンク化（`/locations/detail?id=xxx`）
+- [x] `apps/web/src/app/items/detail/ItemDetailClient.tsx`: 箱名をリンク化（`/boxes/detail?id=xxx`）
+- [x] `apps/web/src/app/items/detail/ItemDetailClient.tsx`: 保管場所名をリンク化（`/locations/detail?id=xxx`）
 
 #### UI例
 ```
