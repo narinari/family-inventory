@@ -1,7 +1,15 @@
-import { Client, Collection, GatewayIntentBits, Events, type ChatInputCommandInteraction } from 'discord.js';
+import {
+  Client,
+  Collection,
+  GatewayIntentBits,
+  Events,
+  type ChatInputCommandInteraction,
+  type ButtonInteraction,
+} from 'discord.js';
 import { createServer } from 'node:http';
 import { commands } from './commands/index.js';
 import * as messageCreateEvent from './events/messageCreate.js';
+import { apiClient } from './lib/api-client.js';
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const PORT = process.env.PORT || 8080;
@@ -41,6 +49,12 @@ client.once(Events.ClientReady, (readyClient) => {
 client.on(Events.MessageCreate, messageCreateEvent.execute);
 
 client.on(Events.InteractionCreate, async (interaction) => {
+  // ボタンインタラクションの処理
+  if (interaction.isButton()) {
+    await handleButtonInteraction(interaction);
+    return;
+  }
+
   if (!interaction.isChatInputCommand()) return;
 
   const command = commandCollection.get(interaction.commandName);
@@ -64,6 +78,74 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
   }
 });
+
+async function handleButtonInteraction(interaction: ButtonInteraction): Promise<void> {
+  const [action, entityType, entityId] = interaction.customId.split(':');
+
+  await interaction.deferReply({ ephemeral: true });
+
+  try {
+    if (entityType === 'item') {
+      switch (action) {
+        case 'consume': {
+          const consumeSuccess = await apiClient.consumeItem(interaction.user.id, entityId);
+          if (consumeSuccess) {
+            await interaction.editReply({ content: '持ち物を消費済みにしました。' });
+          } else {
+            await interaction.editReply({ content: '消費処理に失敗しました。' });
+          }
+          break;
+        }
+        case 'give':
+          await interaction.editReply({
+            content: `譲渡先を指定してコマンドを実行してください:\n\`/item give id:${entityId.slice(0, 8)} to:〇〇\``,
+          });
+          break;
+        case 'sell': {
+          const sellSuccess = await apiClient.sellItem(interaction.user.id, entityId);
+          if (sellSuccess) {
+            await interaction.editReply({ content: '持ち物を売却済みにしました。' });
+          } else {
+            await interaction.editReply({ content: '売却処理に失敗しました。' });
+          }
+          break;
+        }
+        default:
+          await interaction.editReply({ content: '不明な操作です。' });
+      }
+    } else if (entityType === 'wishlist') {
+      switch (action) {
+        case 'purchase': {
+          const result = await apiClient.purchaseWishlistItem(interaction.user.id, entityId);
+          if (result) {
+            await interaction.editReply({
+              content: `「${result.wishlist.name}」を購入完了にしました。\n持ち物にも登録されました。`,
+            });
+          } else {
+            await interaction.editReply({ content: '購入完了処理に失敗しました。' });
+          }
+          break;
+        }
+        case 'cancel': {
+          const cancelSuccess = await apiClient.cancelWishlistItem(interaction.user.id, entityId);
+          if (cancelSuccess) {
+            await interaction.editReply({ content: '購入を見送りにしました。' });
+          } else {
+            await interaction.editReply({ content: '見送り処理に失敗しました。' });
+          }
+          break;
+        }
+        default:
+          await interaction.editReply({ content: '不明な操作です。' });
+      }
+    } else {
+      await interaction.editReply({ content: '不明なエンティティタイプです。' });
+    }
+  } catch (error) {
+    console.error('Button interaction error:', error);
+    await interaction.editReply({ content: '処理中にエラーが発生しました。' });
+  }
+}
 
 client.login(BOT_TOKEN).catch((error) => {
   console.error('Failed to login:', error);

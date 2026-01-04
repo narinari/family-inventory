@@ -2,8 +2,11 @@ import {
   SlashCommandBuilder,
   type ChatInputCommandInteraction,
   EmbedBuilder,
+  type ActionRowBuilder,
+  type ButtonBuilder,
 } from 'discord.js';
 import { apiClient } from '../lib/api-client.js';
+import { createWishlistActionRow } from '../lib/button-builders.js';
 
 export const data = new SlashCommandBuilder()
   .setName('want')
@@ -181,7 +184,7 @@ async function handleList(interaction: ChatInputCommandInteraction): Promise<voi
     const embed = new EmbedBuilder()
       .setColor(0x5865f2)
       .setTitle('購入予定リスト')
-      .setDescription(`全 ${wishlist.length} 件`)
+      .setDescription(`全 ${wishlist.length} 件（ボタン操作は最初の5件のみ）`)
       .setTimestamp();
 
     // 優先度でソート
@@ -190,7 +193,8 @@ async function handleList(interaction: ChatInputCommandInteraction): Promise<voi
       return priorityOrder[a.priority] - priorityOrder[b.priority];
     });
 
-    const displayItems = sorted.slice(0, 10);
+    // 最大5件までボタン表示（Discordの制限: 1メッセージに最大5 ActionRow）
+    const displayItems = sorted.slice(0, 5);
     const itemList = displayItems
       .map((item, index) => {
         const emoji = priorityEmojis[item.priority] || '';
@@ -200,11 +204,16 @@ async function handleList(interaction: ChatInputCommandInteraction): Promise<voi
 
     embed.addFields({ name: '購入予定', value: itemList });
 
-    if (wishlist.length > 10) {
-      embed.setFooter({ text: `他 ${wishlist.length - 10} 件` });
+    if (wishlist.length > 5) {
+      embed.setFooter({ text: `他 ${wishlist.length - 5} 件（/want search で検索）` });
     }
 
-    await interaction.editReply({ embeds: [embed] });
+    // 各アイテムにボタンを追加
+    const components: ActionRowBuilder<ButtonBuilder>[] = displayItems.map((item) =>
+      createWishlistActionRow(item.id)
+    );
+
+    await interaction.editReply({ embeds: [embed], components });
   } catch (error) {
     console.error('Failed to list wishlist:', error);
     await interaction.editReply({ content: '購入予定一覧の取得中にエラーが発生しました。' });
