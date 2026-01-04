@@ -1038,7 +1038,7 @@ Botコマンドでリスト表示した際に、各アイテムに対して操�
 
 **優先度**: 高
 **依存**: TASK-602
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 棚卸操作用のWeb画面を実装する。チェックリスト形式で箱内のアイテムを確認できるようにする。
@@ -1050,17 +1050,17 @@ Botコマンドでリスト表示した際に、各アイテムに対して操�
 | 棚卸チェック | /inventory/check?boxId=xxx | チェックリスト画面 |
 
 #### 詳細タスク
-- [ ] `apps/web/src/app/inventory/page.tsx`: 棚卸トップ画面
+- [x] `apps/web/src/app/inventory/page.tsx`: 棚卸トップ画面
   - 保管場所ごとに箱を階層表示
   - 各箱のアイテム数と最終確認日を表示
-- [ ] `apps/web/src/app/inventory/check/page.tsx`: チェックリスト画面
+- [x] `apps/web/src/app/inventory/check/page.tsx`: チェックリスト画面
   - 箱内アイテムをリスト表示
   - 各アイテムに「確認」ボタン
   - 「全て確認済みにする」ボタン
   - 編集へのリンク（箱移動などの差異修正用）
   - 「+ 登録されていないものを追加」ボタン
-- [ ] `apps/web/src/lib/api.ts`: verify 関連API呼び出し関数追加
-- [ ] ナビゲーション（Header）に「棚卸」リンク追加
+- [x] `apps/web/src/lib/api.ts`: verify 関連API呼び出し関数追加
+- [x] ナビゲーション（Header）に「棚卸」リンク追加
 
 #### 画面フロー
 ```
