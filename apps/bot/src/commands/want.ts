@@ -2,8 +2,11 @@ import {
   SlashCommandBuilder,
   type ChatInputCommandInteraction,
   EmbedBuilder,
+  type ActionRowBuilder,
+  type ButtonBuilder,
 } from 'discord.js';
 import { apiClient } from '../lib/api-client.js';
+import { createWishlistActionRow } from '../lib/button-builders.js';
 
 export const data = new SlashCommandBuilder()
   .setName('want')
@@ -59,6 +62,14 @@ export const data = new SlashCommandBuilder()
       .addStringOption((option) =>
         option.setName('id').setDescription('購入予定ID').setRequired(true)
       )
+  )
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName('search')
+      .setDescription('購入予定を検索します')
+      .addStringOption((option) =>
+        option.setName('keyword').setDescription('検索キーワード').setRequired(true)
+      )
   );
 
 async function checkUser(interaction: ChatInputCommandInteraction): Promise<boolean> {
@@ -106,6 +117,9 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       break;
     case 'detail':
       await handleDetail(interaction);
+      break;
+    case 'search':
+      await handleSearch(interaction);
       break;
     default:
       await interaction.editReply({ content: '不明なサブコマンドです。' });
@@ -170,7 +184,7 @@ async function handleList(interaction: ChatInputCommandInteraction): Promise<voi
     const embed = new EmbedBuilder()
       .setColor(0x5865f2)
       .setTitle('購入予定リスト')
-      .setDescription(`全 ${wishlist.length} 件`)
+      .setDescription(`全 ${wishlist.length} 件（ボタン操作は最初の5件のみ）`)
       .setTimestamp();
 
     // 優先度でソート
@@ -179,7 +193,8 @@ async function handleList(interaction: ChatInputCommandInteraction): Promise<voi
       return priorityOrder[a.priority] - priorityOrder[b.priority];
     });
 
-    const displayItems = sorted.slice(0, 10);
+    // 最大5件までボタン表示（Discordの制限: 1メッセージに最大5 ActionRow）
+    const displayItems = sorted.slice(0, 5);
     const itemList = displayItems
       .map((item, index) => {
         const emoji = priorityEmojis[item.priority] || '';
@@ -189,11 +204,16 @@ async function handleList(interaction: ChatInputCommandInteraction): Promise<voi
 
     embed.addFields({ name: '購入予定', value: itemList });
 
-    if (wishlist.length > 10) {
-      embed.setFooter({ text: `他 ${wishlist.length - 10} 件` });
+    if (wishlist.length > 5) {
+      embed.setFooter({ text: `他 ${wishlist.length - 5} 件（/want search で検索）` });
     }
 
-    await interaction.editReply({ embeds: [embed] });
+    // 各アイテムにボタンを追加
+    const components: ActionRowBuilder<ButtonBuilder>[] = displayItems.map((item) =>
+      createWishlistActionRow(item.id)
+    );
+
+    await interaction.editReply({ embeds: [embed], components });
   } catch (error) {
     console.error('Failed to list wishlist:', error);
     await interaction.editReply({ content: '購入予定一覧の取得中にエラーが発生しました。' });
@@ -287,5 +307,45 @@ async function handleDetail(interaction: ChatInputCommandInteraction): Promise<v
   } catch (error) {
     console.error('Failed to get wishlist detail:', error);
     await interaction.editReply({ content: '詳細の取得中にエラーが発生しました。' });
+  }
+}
+
+async function handleSearch(interaction: ChatInputCommandInteraction): Promise<void> {
+  const keyword = interaction.options.getString('keyword', true);
+
+  try {
+    const wishlist = await apiClient.searchWishlist(interaction.user.id, keyword);
+
+    if (wishlist.length === 0) {
+      await interaction.editReply({
+        content: `「${keyword}」に一致する購入予定は見つかりませんでした。`,
+      });
+      return;
+    }
+
+    const embed = new EmbedBuilder()
+      .setColor(0x5865f2)
+      .setTitle(`検索結果: "${keyword}"`)
+      .setDescription(`${wishlist.length} 件見つかりました`)
+      .setTimestamp();
+
+    const displayItems = wishlist.slice(0, 10);
+    const itemList = displayItems
+      .map((item, index) => {
+        const emoji = priorityEmojis[item.priority] || '';
+        return `${index + 1}. ${emoji} **${item.name}** (ID: \`${item.id.slice(0, 8)}\`)`;
+      })
+      .join('\n');
+
+    embed.addFields({ name: '購入予定', value: itemList });
+
+    if (wishlist.length > 10) {
+      embed.setFooter({ text: `他 ${wishlist.length - 10} 件` });
+    }
+
+    await interaction.editReply({ embeds: [embed] });
+  } catch (error) {
+    console.error('Failed to search wishlist:', error);
+    await interaction.editReply({ content: '検索中にエラーが発生しました。' });
   }
 }

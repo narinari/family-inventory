@@ -210,3 +210,18 @@ export async function cancelWishlistItem(familyId: string, id: string): Promise<
 
   return getWishlistById(familyId, id);
 }
+
+export async function searchWishlistItems(
+  familyId: string,
+  query: string,
+  status?: 'pending' | 'purchased' | 'cancelled'
+): Promise<Wishlist[]> {
+  const items = await getWishlistItems(familyId, status ? { status } : undefined);
+  const lowerQuery = query.toLowerCase();
+
+  return items.filter(
+    (item) =>
+      item.name.toLowerCase().includes(lowerQuery) ||
+      (item.memo && item.memo.toLowerCase().includes(lowerQuery))
+  );
+}

@@ -2,8 +2,11 @@ import {
   SlashCommandBuilder,
   type ChatInputCommandInteraction,
   EmbedBuilder,
+  type ActionRowBuilder,
+  type ButtonBuilder,
 } from 'discord.js';
 import { apiClient } from '../lib/api-client.js';
+import { createItemActionRow } from '../lib/button-builders.js';
 
 export const data = new SlashCommandBuilder()
   .setName('item')
@@ -163,21 +166,27 @@ async function handleList(interaction: ChatInputCommandInteraction): Promise<voi
     const embed = new EmbedBuilder()
       .setColor(0x5865f2)
       .setTitle('持ち物一覧')
-      .setDescription(`全 ${items.length} 件`)
+      .setDescription(`全 ${items.length} 件（ボタン操作は最初の5件のみ）`)
       .setTimestamp();
 
-    const displayItems = items.slice(0, 10);
+    // 最大5件までボタン表示（Discordの制限: 1メッセージに最大5 ActionRow）
+    const displayItems = items.slice(0, 5);
     const itemList = displayItems
       .map((item, index) => `${index + 1}. **${item.itemTypeName}** (ID: \`${item.id.slice(0, 8)}\`)`)
       .join('\n');
 
     embed.addFields({ name: '持ち物', value: itemList });
 
-    if (items.length > 10) {
-      embed.setFooter({ text: `他 ${items.length - 10} 件` });
+    if (items.length > 5) {
+      embed.setFooter({ text: `他 ${items.length - 5} 件（/item search で検索）` });
     }
 
-    await interaction.editReply({ embeds: [embed] });
+    // 各アイテムにボタンを追加
+    const components: ActionRowBuilder<ButtonBuilder>[] = displayItems.map((item) =>
+      createItemActionRow(item.id)
+    );
+
+    await interaction.editReply({ embeds: [embed], components });
   } catch (error) {
     console.error('Failed to list items:', error);
     await interaction.editReply({ content: '持ち物一覧の取得中にエラーが発生しました。' });

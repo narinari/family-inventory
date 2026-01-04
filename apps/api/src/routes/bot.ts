@@ -19,6 +19,7 @@ import {
   createWishlistItem,
   purchaseWishlistItem,
   cancelWishlistItem,
+  searchWishlistItems,
 } from '../services/wishlist.service.js';
 import { ErrorCodes, type ItemStatus, type WishlistStatus, type Priority } from '@family-inventory/shared';
 
@@ -534,6 +535,41 @@ router.get('/wishlist', authenticateBotApiKey, async (req: Request, res: Respons
     res.status(500).json({
       success: false,
       error: { code: ErrorCodes.INTERNAL_ERROR, message: '購入予定の取得中にエラーが発生しました' },
+    });
+  }
+});
+
+router.get('/wishlist/search', authenticateBotApiKey, async (req: Request, res: Response) => {
+  try {
+    const discordId = req.query.discordId as string;
+    const query = req.query.q as string;
+
+    if (!discordId) {
+      res.status(400).json({
+        success: false,
+        error: { code: ErrorCodes.VALIDATION_ERROR, message: 'discordId が必要です' },
+      });
+      return;
+    }
+
+    if (!query) {
+      res.status(400).json({
+        success: false,
+        error: { code: ErrorCodes.VALIDATION_ERROR, message: '検索キーワード(q)が必要です' },
+      });
+      return;
+    }
+
+    const user = await getUserFromDiscordId(discordId, res);
+    if (!user) return;
+
+    const wishlist = await searchWishlistItems(user.familyId, query, 'pending');
+    res.json({ success: true, data: { wishlist } });
+  } catch (error) {
+    console.error('Bot search wishlist error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: ErrorCodes.INTERNAL_ERROR, message: '購入予定の検索中にエラーが発生しました' },
     });
   }
 });
