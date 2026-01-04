@@ -19,6 +19,7 @@ import type {
   CreateWishlistInput,
   UpdateWishlistInput,
   User,
+  ItemWithRelatedTags,
 } from '@family-inventory/shared';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -45,9 +46,17 @@ async function fetchWithAuth<T>(path: string, options: RequestInit = {}): Promis
   return response.json();
 }
 
-export async function getItems(filter?: { status?: string }): Promise<Item[]> {
+export async function getItems(filter?: {
+  status?: string;
+  ownerId?: string;
+  tags?: string[];
+  includeInheritedTags?: boolean;
+}): Promise<Item[]> {
   const params = new URLSearchParams();
   if (filter?.status) params.set('status', filter.status);
+  if (filter?.ownerId) params.set('ownerId', filter.ownerId);
+  if (filter?.tags && filter.tags.length > 0) params.set('tags', filter.tags.join(','));
+  if (filter?.includeInheritedTags) params.set('includeInheritedTags', 'true');
   const query = params.toString();
   const path = query ? `/items?${query}` : '/items';
   const res = await fetchWithAuth<{ items: Item[] }>(path);
@@ -74,9 +83,9 @@ export async function getWishlist(filter?: { status?: WishlistStatus }): Promise
 }
 
 // Items CRUD
-export async function getItem(id: string): Promise<Item | null> {
-  const res = await fetchWithAuth<{ item: Item }>(`/items/${id}`);
-  return res.data?.item ?? null;
+export async function getItem(id: string): Promise<ItemWithRelatedTags | null> {
+  const res = await fetchWithAuth<ItemWithRelatedTags>(`/items/${id}`);
+  return res.data ?? null;
 }
 
 export async function createItem(input: CreateItemInput): Promise<ApiResponse<{ item: Item }>> {

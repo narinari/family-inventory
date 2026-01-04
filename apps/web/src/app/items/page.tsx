@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
-import { getItems, getItemTypes, getBoxes, consumeItem, giveItem, sellItem } from '@/lib/api';
-import type { Item, ItemType, Box, ItemStatus } from '@family-inventory/shared';
+import { getItems, getItemTypes, getBoxes, getTags, getMembers, consumeItem, giveItem, sellItem } from '@/lib/api';
+import type { Item, ItemType, Box, Tag, User, ItemStatus } from '@family-inventory/shared';
 
 type StatusFilter = 'all' | ItemStatus;
 
@@ -16,8 +16,13 @@ export default function ItemsPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [itemTypes, setItemTypes] = useState<ItemType[]>([]);
   const [boxes, setBoxes] = useState<Box[]>([]);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [members, setMembers] = useState<User[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('owned');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [includeInheritedTags, setIncludeInheritedTags] = useState(true);
+  const [selectedOwnerId, setSelectedOwnerId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [actionModal, setActionModal] = useState<{ item: Item; action: 'consume' | 'give' | 'sell' } | null>(null);
 
@@ -27,22 +32,51 @@ export default function ItemsPage() {
     }
   }, [user, loading, router]);
 
+  const loadItems = useCallback(async () => {
+    try {
+      const filter: {
+        tags?: string[];
+        includeInheritedTags?: boolean;
+        ownerId?: string;
+      } = {};
+      if (selectedTags.length > 0) {
+        filter.tags = selectedTags;
+        filter.includeInheritedTags = includeInheritedTags;
+      }
+      if (selectedOwnerId) {
+        filter.ownerId = selectedOwnerId;
+      }
+      const itemsData = await getItems(filter);
+      setItems(itemsData);
+    } catch (error) {
+      console.error('Failed to load items:', error);
+    }
+  }, [selectedTags, includeInheritedTags, selectedOwnerId]);
+
   useEffect(() => {
     if (user) {
       loadData();
     }
   }, [user]);
 
+  useEffect(() => {
+    if (user) {
+      loadItems();
+    }
+  }, [user, loadItems]);
+
   async function loadData() {
     try {
-      const [itemsData, typesData, boxesData] = await Promise.all([
-        getItems(),
+      const [typesData, boxesData, tagsData, membersData] = await Promise.all([
         getItemTypes(),
         getBoxes(),
+        getTags(),
+        getMembers(),
       ]);
-      setItems(itemsData);
       setItemTypes(typesData);
       setBoxes(boxesData);
+      setAllTags(tagsData);
+      setMembers(membersData);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -95,7 +129,7 @@ export default function ItemsPage() {
       }
 
       if (result?.success) {
-        await loadData();
+        await loadItems();
         setActionModal(null);
       }
     } catch (error) {
@@ -117,7 +151,7 @@ export default function ItemsPage() {
           </Link>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+        <div className="bg-white rounded-xl shadow-sm p-4 mb-6 space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <input
               type="text"
@@ -137,7 +171,70 @@ export default function ItemsPage() {
               <option value="given">譲渡済</option>
               <option value="sold">売却済</option>
             </select>
+            <select
+              value={selectedOwnerId}
+              onChange={(e) => setSelectedOwnerId(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option value="">全メンバー</option>
+              {members.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.displayName}
+                </option>
+              ))}
+            </select>
           </div>
+
+          {allTags.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700">タグで絞り込み</span>
+                <label className="flex items-center gap-2 text-sm text-gray-600">
+                  <input
+                    type="checkbox"
+                    checked={includeInheritedTags}
+                    onChange={(e) => setIncludeInheritedTags(e.target.checked)}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  継承タグも含める
+                </label>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {allTags.map((tag) => {
+                  const isSelected = selectedTags.includes(tag.id);
+                  return (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedTags(selectedTags.filter((id) => id !== tag.id));
+                        } else {
+                          setSelectedTags([...selectedTags, tag.id]);
+                        }
+                      }}
+                      className={`px-3 py-1 text-sm rounded-full border transition-colors ${
+                        isSelected
+                          ? 'bg-primary-100 border-primary-500 text-primary-700'
+                          : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-400'
+                      }`}
+                    >
+                      {tag.name}
+                    </button>
+                  );
+                })}
+                {selectedTags.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTags([])}
+                    className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700"
+                  >
+                    クリア
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {dataLoading ? (

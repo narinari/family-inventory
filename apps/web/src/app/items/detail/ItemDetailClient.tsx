@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
-import { getItem, getItemTypes, getBoxes, getMembers, updateItem } from '@/lib/api';
-import type { Item, ItemType, Box, User } from '@family-inventory/shared';
+import { getItem, getBoxes, getMembers, updateItem } from '@/lib/api';
+import type { Box, User, ItemWithRelatedTags, TagSource } from '@family-inventory/shared';
 
 export default function ItemDetailClient() {
   const { user, loading } = useAuth();
@@ -14,8 +14,7 @@ export default function ItemDetailClient() {
   const searchParams = useSearchParams();
   const itemId = searchParams.get('id');
 
-  const [item, setItem] = useState<Item | null>(null);
-  const [itemTypes, setItemTypes] = useState<ItemType[]>([]);
+  const [itemDetail, setItemDetail] = useState<ItemWithRelatedTags | null>(null);
   const [boxes, setBoxes] = useState<Box[]>([]);
   const [members, setMembers] = useState<User[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
@@ -27,6 +26,7 @@ export default function ItemDetailClient() {
     ownerId: '',
     boxId: '',
     memo: '',
+    tags: [] as string[],
   });
 
   useEffect(() => {
@@ -44,9 +44,8 @@ export default function ItemDetailClient() {
   async function loadData() {
     if (!itemId) return;
     try {
-      const [itemData, typesData, boxesData, membersData] = await Promise.all([
+      const [itemData, boxesData, membersData] = await Promise.all([
         getItem(itemId),
-        getItemTypes(),
         getBoxes(),
         getMembers(),
       ]);
@@ -56,14 +55,14 @@ export default function ItemDetailClient() {
         return;
       }
 
-      setItem(itemData);
-      setItemTypes(typesData);
+      setItemDetail(itemData);
       setBoxes(boxesData);
       setMembers(membersData);
       setFormData({
-        ownerId: itemData.ownerId,
-        boxId: itemData.boxId ?? '',
-        memo: itemData.memo ?? '',
+        ownerId: itemData.item.ownerId,
+        boxId: itemData.item.boxId ?? '',
+        memo: itemData.item.memo ?? '',
+        tags: itemData.item.tags,
       });
     } catch (err) {
       console.error('Failed to load data:', err);
@@ -74,20 +73,22 @@ export default function ItemDetailClient() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!item) return;
+    if (!itemDetail) return;
 
     setSubmitting(true);
     setError(null);
 
     try {
-      const result = await updateItem(item.id, {
+      const result = await updateItem(itemDetail.item.id, {
         ownerId: formData.ownerId || undefined,
         boxId: formData.boxId || null,
         memo: formData.memo || undefined,
+        tags: formData.tags,
       });
 
       if (result.success && result.data) {
-        setItem(result.data.item);
+        // 更新後に詳細を再取得
+        await loadData();
         setEditing(false);
       } else {
         setError(result.error?.message ?? '更新に失敗しました');
@@ -107,13 +108,11 @@ export default function ItemDetailClient() {
     );
   }
 
-  if (!item) {
+  if (!itemDetail) {
     return null;
   }
 
-  const itemType = itemTypes.find((t) => t.id === item.itemTypeId);
-  const box = item.boxId ? boxes.find((b) => b.id === item.boxId) : null;
-  const owner = members.find((m) => m.id === item.ownerId);
+  const { item, itemType, owner, box, location, relatedTags } = itemDetail;
 
   const statusConfig = {
     owned: { label: '所有中', className: 'bg-green-100 text-green-800' },
@@ -214,6 +213,7 @@ export default function ItemDetailClient() {
                       ownerId: item.ownerId,
                       boxId: item.boxId ?? '',
                       memo: item.memo ?? '',
+                      tags: item.tags,
                     });
                   }}
                   className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
@@ -241,8 +241,29 @@ export default function ItemDetailClient() {
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">保管場所</dt>
-                <dd className="mt-1 text-gray-900">{box?.name ?? '未設定'}</dd>
+                <dd className="mt-1 text-gray-900">
+                  {box ? (
+                    <>
+                      {box.name}
+                      {location && <span className="text-gray-500 ml-2">({location.name})</span>}
+                    </>
+                  ) : (
+                    '未設定'
+                  )}
+                </dd>
               </div>
+              {relatedTags.length > 0 && (
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">タグ</dt>
+                  <dd className="mt-2">
+                    <div className="flex flex-wrap gap-2">
+                      {relatedTags.map((tag) => (
+                        <TagBadge key={`${tag.source}-${tag.id}`} tag={tag} />
+                      ))}
+                    </div>
+                  </dd>
+                </div>
+              )}
               {item.memo && (
                 <div>
                   <dt className="text-sm font-medium text-gray-500">メモ</dt>
@@ -308,5 +329,24 @@ export default function ItemDetailClient() {
         </div>
       </main>
     </div>
+  );
+}
+
+const tagSourceConfig: Record<TagSource, { label: string; className: string }> = {
+  item: { label: 'アイテム', className: 'bg-blue-100 text-blue-800 border-blue-300' },
+  itemType: { label: '種別', className: 'bg-purple-100 text-purple-800 border-purple-300' },
+  box: { label: '箱', className: 'bg-orange-100 text-orange-800 border-orange-300' },
+  location: { label: '場所', className: 'bg-green-100 text-green-800 border-green-300' },
+};
+
+function TagBadge({ tag }: { tag: { id: string; name: string; source: TagSource } }) {
+  const config = tagSourceConfig[tag.source];
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full border ${config.className}`}
+    >
+      <span className="font-medium">{tag.name}</span>
+      <span className="text-[10px] opacity-70">({config.label})</span>
+    </span>
   );
 }

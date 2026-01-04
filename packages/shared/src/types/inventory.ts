@@ -227,6 +227,7 @@ export interface ItemFilter {
   boxId?: string;
   locationId?: string;
   tags?: string[];
+  includeInheritedTags?: boolean;
   search?: string;
 }
 
@@ -243,4 +244,26 @@ export interface ItemLocation {
   itemType: ItemType;
   box?: Box;
   location?: Location;
+}
+
+// ============================================
+// タグの種類別表示用
+// ============================================
+
+export type TagSource = 'item' | 'itemType' | 'box' | 'location';
+
+export interface TagWithSource {
+  id: string;
+  name: string;
+  color?: string;
+  source: TagSource;
+}
+
+export interface ItemWithRelatedTags {
+  item: Item;
+  itemType: ItemType;
+  owner?: { id: string; displayName: string };
+  box?: Box;
+  location?: Location;
+  relatedTags: TagWithSource[];
 }
