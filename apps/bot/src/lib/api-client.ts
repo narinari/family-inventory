@@ -277,6 +277,12 @@ export class ApiClient {
     const response = await this.post(`/bot/wishlist/${wishlistId}/cancel`, { discordId });
     return response.success;
   }
+
+  async searchWishlist(discordId: string, query: string): Promise<Wishlist[]> {
+    const params = new URLSearchParams({ discordId, q: query });
+    const response = await this.get<GetWishlistResponse>(`/bot/wishlist/search?${params}`);
+    return response.success && response.data ? response.data.wishlist : [];
+  }
 }
 
 // Factory function for creating configured API client
