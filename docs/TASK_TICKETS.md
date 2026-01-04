@@ -995,7 +995,7 @@ Botコマンドでリスト表示した際に、各アイテムに対して操�
 
 **優先度**: 高
 **依存**: TASK-601
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 棚卸操作用のAPIエンドポイントを実装する。
@@ -1007,10 +1007,10 @@ Botコマンドでリスト表示した際に、各アイテムに対して操�
 | POST | /items/batch-verify | 複数アイテムを一括確認 |
 
 #### 詳細タスク
-- [ ] `apps/api/src/routes/items.ts`: `POST /items/:id/verify` 追加
-- [ ] `apps/api/src/routes/items.ts`: `POST /items/batch-verify` 追加
-- [ ] Zodバリデーションスキーマ追加（verifyAt オプション）
-- [ ] テスト追加
+- [x] `apps/api/src/routes/items.ts`: `POST /items/:id/verify` 追加
+- [x] `apps/api/src/routes/items.ts`: `POST /items/batch-verify` 追加
+- [x] Zodバリデーションスキーマ追加（verifyAt オプション）
+- [x] `apps/api/src/services/item.service.ts`: verifyItem, batchVerifyItems 関数追加
 
 #### APIレスポンス例
 ```json
