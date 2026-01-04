@@ -63,6 +63,9 @@ export async function getItems(familyId: string, filter?: ItemFilter): Promise<I
   if (filter?.boxId) {
     query = query.where('boxId', '==', filter.boxId);
   }
+  if (filter?.typeId) {
+    query = query.where('itemTypeId', '==', filter.typeId);
+  }
 
   const snapshot = await query.orderBy('createdAt', 'desc').get();
 

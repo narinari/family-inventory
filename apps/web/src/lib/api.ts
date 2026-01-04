@@ -49,12 +49,14 @@ async function fetchWithAuth<T>(path: string, options: RequestInit = {}): Promis
 export async function getItems(filter?: {
   status?: string;
   ownerId?: string;
+  typeId?: string;
   tags?: string[];
   includeInheritedTags?: boolean;
 }): Promise<Item[]> {
   const params = new URLSearchParams();
   if (filter?.status) params.set('status', filter.status);
   if (filter?.ownerId) params.set('ownerId', filter.ownerId);
+  if (filter?.typeId) params.set('typeId', filter.typeId);
   if (filter?.tags && filter.tags.length > 0) params.set('tags', filter.tags.join(','));
   if (filter?.includeInheritedTags) params.set('includeInheritedTags', 'true');
   const query = params.toString();

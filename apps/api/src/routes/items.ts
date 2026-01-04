@@ -65,6 +65,7 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
       status: req.query.status as ItemStatus | undefined,
       ownerId: req.query.ownerId as string | undefined,
       boxId: req.query.boxId as string | undefined,
+      typeId: req.query.typeId as string | undefined,
       tags: req.query.tags ? (req.query.tags as string).split(',') : undefined,
       includeInheritedTags: req.query.includeInheritedTags === 'true',
     };
