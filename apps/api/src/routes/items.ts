@@ -4,13 +4,13 @@ import { authenticateToken } from '../middleware/auth.js';
 import { getUserByUid } from '../services/auth.service.js';
 import {
   getItems,
-  getItemById,
   createItem,
   updateItem,
   consumeItem,
   giveItem,
   sellItem,
   getItemLocation,
+  getItemWithRelatedTags,
 } from '../services/item.service.js';
 import { ErrorCodes, ItemStatus } from '@family-inventory/shared';
 
@@ -92,8 +92,9 @@ router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
       return;
     }
 
-    const item = await getItemById(user.familyId, req.params.id);
-    if (!item) {
+    // 関連タグを含むアイテム詳細を取得
+    const itemDetail = await getItemWithRelatedTags(user.familyId, req.params.id);
+    if (!itemDetail) {
       res.status(404).json({
         success: false,
         error: { code: 'ITEM_NOT_FOUND', message: '持ち物が見つかりません' },
@@ -101,7 +102,7 @@ router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
       return;
     }
 
-    res.json({ success: true, data: { item } });
+    res.json({ success: true, data: itemDetail });
   } catch (error) {
     console.error('Get item error:', error);
     res.status(500).json({

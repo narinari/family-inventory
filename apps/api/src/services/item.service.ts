@@ -8,9 +8,13 @@ import {
   SellItemInput,
   ItemFilter,
   ItemLocation,
+  ItemWithRelatedTags,
+  TagWithSource,
+  TagSource,
 } from '@family-inventory/shared';
 import { FieldValue, Timestamp, Query, DocumentData } from 'firebase-admin/firestore';
 import { getItemTypeById } from './item-type.service.js';
+import { getTags } from './tag.service.js';
 
 function getItemsCollection(familyId: string) {
   return db.collection('families').doc(familyId).collection('items');
@@ -259,4 +263,128 @@ export async function getItemLocation(familyId: string, id: string): Promise<Ite
   }
 
   return { item, itemType, box, location };
+}
+
+function getUsersCollection(familyId: string) {
+  return db.collection('families').doc(familyId).collection('users');
+}
+
+export async function getItemWithRelatedTags(
+  familyId: string,
+  id: string
+): Promise<ItemWithRelatedTags | null> {
+  const item = await getItemById(familyId, id);
+  if (!item) return null;
+
+  const itemType = await getItemTypeById(familyId, item.itemTypeId);
+  if (!itemType) return null;
+
+  // 全タグを取得してマップを作成
+  const allTags = await getTags(familyId);
+  const tagMap = new Map(allTags.map((t) => [t.id, t]));
+
+  // 関連タグを収集
+  const relatedTags: TagWithSource[] = [];
+
+  // アイテム自身のタグ
+  for (const tagId of item.tags) {
+    const tag = tagMap.get(tagId);
+    if (tag) {
+      relatedTags.push({
+        id: tag.id,
+        name: tag.name,
+        color: tag.color,
+        source: 'item' as TagSource,
+      });
+    }
+  }
+
+  // アイテム種別のタグ
+  for (const tagId of itemType.tags) {
+    const tag = tagMap.get(tagId);
+    if (tag && !relatedTags.some((t) => t.id === tag.id)) {
+      relatedTags.push({
+        id: tag.id,
+        name: tag.name,
+        color: tag.color,
+        source: 'itemType' as TagSource,
+      });
+    }
+  }
+
+  let box = undefined;
+  let location = undefined;
+
+  if (item.boxId) {
+    const boxDoc = await getBoxesCollection(familyId).doc(item.boxId).get();
+    if (boxDoc.exists) {
+      const boxData = boxDoc.data()!;
+      box = {
+        id: boxDoc.id,
+        familyId,
+        name: boxData.name,
+        locationId: boxData.locationId || undefined,
+        description: boxData.description || undefined,
+        tags: boxData.tags || [],
+        createdAt: (boxData.createdAt as Timestamp).toDate(),
+        updatedAt: (boxData.updatedAt as Timestamp).toDate(),
+      };
+
+      // 箱のタグ
+      for (const tagId of box.tags) {
+        const tag = tagMap.get(tagId);
+        if (tag && !relatedTags.some((t) => t.id === tag.id)) {
+          relatedTags.push({
+            id: tag.id,
+            name: tag.name,
+            color: tag.color,
+            source: 'box' as TagSource,
+          });
+        }
+      }
+
+      if (boxData.locationId) {
+        const locationDoc = await getLocationsCollection(familyId).doc(boxData.locationId).get();
+        if (locationDoc.exists) {
+          const locationData = locationDoc.data()!;
+          location = {
+            id: locationDoc.id,
+            familyId,
+            name: locationData.name,
+            address: locationData.address || undefined,
+            description: locationData.description || undefined,
+            tags: locationData.tags || [],
+            createdAt: (locationData.createdAt as Timestamp).toDate(),
+            updatedAt: (locationData.updatedAt as Timestamp).toDate(),
+          };
+
+          // 保管場所のタグ
+          for (const tagId of location.tags) {
+            const tag = tagMap.get(tagId);
+            if (tag && !relatedTags.some((t) => t.id === tag.id)) {
+              relatedTags.push({
+                id: tag.id,
+                name: tag.name,
+                color: tag.color,
+                source: 'location' as TagSource,
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 所有者情報を取得
+  let owner = undefined;
+  const userDoc = await getUsersCollection(familyId).doc(item.ownerId).get();
+  if (userDoc.exists) {
+    const userData = userDoc.data()!;
+    owner = {
+      id: userDoc.id,
+      displayName: userData.displayName || 'Unknown',
+    };
+  }
+
+  return { item, itemType, owner, box, location, relatedTags };
 }
