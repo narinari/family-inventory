@@ -66,6 +66,7 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
       ownerId: req.query.ownerId as string | undefined,
       boxId: req.query.boxId as string | undefined,
       tags: req.query.tags ? (req.query.tags as string).split(',') : undefined,
+      includeInheritedTags: req.query.includeInheritedTags === 'true',
     };
 
     const items = await getItems(user.familyId, filter);

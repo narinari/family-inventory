@@ -46,9 +46,17 @@ async function fetchWithAuth<T>(path: string, options: RequestInit = {}): Promis
   return response.json();
 }
 
-export async function getItems(filter?: { status?: string }): Promise<Item[]> {
+export async function getItems(filter?: {
+  status?: string;
+  ownerId?: string;
+  tags?: string[];
+  includeInheritedTags?: boolean;
+}): Promise<Item[]> {
   const params = new URLSearchParams();
   if (filter?.status) params.set('status', filter.status);
+  if (filter?.ownerId) params.set('ownerId', filter.ownerId);
+  if (filter?.tags && filter.tags.length > 0) params.set('tags', filter.tags.join(','));
+  if (filter?.includeInheritedTags) params.set('includeInheritedTags', 'true');
   const query = params.toString();
   const path = query ? `/items?${query}` : '/items';
   const res = await fetchWithAuth<{ items: Item[] }>(path);

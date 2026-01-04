@@ -69,7 +69,56 @@ export async function getItems(familyId: string, filter?: ItemFilter): Promise<I
   let items = snapshot.docs.map((doc) => toItem(doc, familyId));
 
   if (filter?.tags && filter.tags.length > 0) {
-    items = items.filter((item) => filter.tags!.some((tag) => item.tags.includes(tag)));
+    if (filter.includeInheritedTags) {
+      // 継承タグを含めた絞り込み
+      const itemTypesSnapshot = await db.collection('families').doc(familyId).collection('itemTypes').get();
+      const boxesSnapshot = await getBoxesCollection(familyId).get();
+      const locationsSnapshot = await getLocationsCollection(familyId).get();
+
+      const itemTypeTagsMap = new Map<string, string[]>();
+      itemTypesSnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        itemTypeTagsMap.set(doc.id, data.tags || []);
+      });
+
+      const boxTagsMap = new Map<string, { tags: string[]; locationId?: string }>();
+      boxesSnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        boxTagsMap.set(doc.id, { tags: data.tags || [], locationId: data.locationId });
+      });
+
+      const locationTagsMap = new Map<string, string[]>();
+      locationsSnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        locationTagsMap.set(doc.id, data.tags || []);
+      });
+
+      items = items.filter((item) => {
+        // アイテム自身のタグ
+        const allTags = new Set<string>(item.tags);
+
+        // アイテム種別のタグ
+        const itemTypeTags = itemTypeTagsMap.get(item.itemTypeId) || [];
+        itemTypeTags.forEach((tag) => allTags.add(tag));
+
+        // 箱のタグと保管場所のタグ
+        if (item.boxId) {
+          const boxInfo = boxTagsMap.get(item.boxId);
+          if (boxInfo) {
+            boxInfo.tags.forEach((tag) => allTags.add(tag));
+            if (boxInfo.locationId) {
+              const locationTags = locationTagsMap.get(boxInfo.locationId) || [];
+              locationTags.forEach((tag) => allTags.add(tag));
+            }
+          }
+        }
+
+        return filter.tags!.some((tag) => allTags.has(tag));
+      });
+    } else {
+      // アイテム自身のタグのみで絞り込み
+      items = items.filter((item) => filter.tags!.some((tag) => item.tags.includes(tag)));
+    }
   }
 
   return items;

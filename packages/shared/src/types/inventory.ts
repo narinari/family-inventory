@@ -227,6 +227,7 @@ export interface ItemFilter {
   boxId?: string;
   locationId?: string;
   tags?: string[];
+  includeInheritedTags?: boolean;
   search?: string;
 }
 
