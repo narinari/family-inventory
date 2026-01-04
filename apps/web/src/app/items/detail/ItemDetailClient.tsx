@@ -135,7 +135,13 @@ export default function ItemDetailClient() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {itemType?.name ?? '不明なアイテム'}
+                {itemType ? (
+                  <Link href={`/items?typeId=${itemType.id}`} className="hover:text-primary-600">
+                    {itemType.name}
+                  </Link>
+                ) : (
+                  '不明なアイテム'
+                )}
               </h1>
               <span className={`inline-flex items-center px-2 py-1 rounded text-sm font-medium mt-2 ${statusConfig[item.status].className}`}>
                 {statusConfig[item.status].label}
@@ -233,7 +239,15 @@ export default function ItemDetailClient() {
             <dl className="space-y-4">
               <div>
                 <dt className="text-sm font-medium text-gray-500">アイテム種別</dt>
-                <dd className="mt-1 text-gray-900">{itemType?.name ?? '-'}</dd>
+                <dd className="mt-1 text-gray-900">
+                  {itemType ? (
+                    <Link href={`/items?typeId=${itemType.id}`} className="text-primary-600 hover:text-primary-700">
+                      {itemType.name}
+                    </Link>
+                  ) : (
+                    '-'
+                  )}
+                </dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">所有者</dt>

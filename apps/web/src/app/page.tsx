@@ -107,16 +107,19 @@ export default function HomePage() {
             title="持ち物"
             value={data.loading ? '--' : String(ownedItemCount)}
             unit="点"
+            href="/items"
           />
           <StatCard
             title="箱"
             value={data.loading ? '--' : String(boxCount)}
             unit="個"
+            href="/boxes"
           />
           <StatCard
             title="欲しい物"
             value={data.loading ? '--' : String(pendingWishlistCount)}
             unit="件"
+            href="/wishlist"
           />
         </div>
 
@@ -137,15 +140,20 @@ export default function HomePage() {
                 {recentItems.map((item) => {
                   const itemType = itemTypeMap.get(item.itemTypeId);
                   return (
-                    <li key={item.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {itemType?.name ?? '不明なアイテム'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {formatDate(item.createdAt)}
-                        </p>
-                      </div>
+                    <li key={item.id}>
+                      <Link
+                        href={`/items/detail?id=${item.id}`}
+                        className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0 hover:bg-gray-50 -mx-2 px-2 rounded"
+                      >
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {itemType?.name ?? '不明なアイテム'}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {formatDate(item.createdAt)}
+                          </p>
+                        </div>
+                      </Link>
                     </li>
                   );
                 })}
@@ -171,16 +179,21 @@ export default function HomePage() {
             ) : highPriorityWishlist.length > 0 ? (
               <ul className="space-y-3">
                 {highPriorityWishlist.map((wish) => (
-                  <li key={wish.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                    <div>
-                      <p className="font-medium text-gray-900">{wish.name}</p>
-                      {wish.priceRange && (
-                        <p className="text-sm text-gray-500">{wish.priceRange}</p>
-                      )}
-                    </div>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                      高
-                    </span>
+                  <li key={wish.id}>
+                    <Link
+                      href={`/wishlist/detail?id=${wish.id}`}
+                      className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0 hover:bg-gray-50 -mx-2 px-2 rounded"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">{wish.name}</p>
+                        {wish.priceRange && (
+                          <p className="text-sm text-gray-500">{wish.priceRange}</p>
+                        )}
+                      </div>
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        高
+                      </span>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -212,14 +225,28 @@ function QuickActionCard({ icon, label, href }: { icon: string; label: string; h
   );
 }
 
-function StatCard({ title, value, unit }: { title: string; value: string; unit: string }) {
-  return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
+function StatCard({ title, value, unit, href }: { title: string; value: string; unit: string; href?: string }) {
+  const content = (
+    <>
       <p className="text-sm text-gray-500 mb-1">{title}</p>
       <p className="text-3xl font-bold text-gray-900">
         {value}
         <span className="text-lg font-normal text-gray-500 ml-1">{unit}</span>
       </p>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow block">
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-6">
+      {content}
     </div>
   );
 }
