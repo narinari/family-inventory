@@ -9,6 +9,8 @@ import {
   consumeItem,
   giveItem,
   sellItem,
+  verifyItem,
+  batchVerifyItems,
   getItemLocation,
   getItemWithRelatedTags,
 } from '../services/item.service.js';
@@ -46,6 +48,15 @@ const sellItemSchema = z.object({
   soldTo: z.string().optional(),
   soldPrice: z.number().min(0).optional(),
   soldAt: z.coerce.date().optional(),
+});
+
+const verifyItemSchema = z.object({
+  verifyAt: z.coerce.date().optional(),
+});
+
+const batchVerifyItemsSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1),
+  verifyAt: z.coerce.date().optional(),
 });
 
 router.get('/', authenticateToken, async (req: Request, res: Response) => {
@@ -328,6 +339,78 @@ router.post('/:id/sell', authenticateToken, async (req: Request, res: Response) 
     res.status(500).json({
       success: false,
       error: { code: ErrorCodes.INTERNAL_ERROR, message: '持ち物の売却処理中にエラーが発生しました' },
+    });
+  }
+});
+
+router.post('/:id/verify', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const authUser = req.authUser!;
+    const user = await getUserByUid(authUser.uid);
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
+      });
+      return;
+    }
+
+    const parsed = verifyItemSchema.safeParse(req.body);
+    const verifyAt = parsed.success ? parsed.data.verifyAt : undefined;
+
+    const item = await verifyItem(user.familyId, req.params.id, verifyAt);
+    if (!item) {
+      res.status(404).json({
+        success: false,
+        error: { code: 'ITEM_NOT_FOUND', message: '持ち物が見つかりません' },
+      });
+      return;
+    }
+
+    res.json({ success: true, data: { item } });
+  } catch (error) {
+    console.error('Verify item error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: ErrorCodes.INTERNAL_ERROR, message: '持ち物の確認処理中にエラーが発生しました' },
+    });
+  }
+});
+
+router.post('/batch-verify', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const authUser = req.authUser!;
+    const user = await getUserByUid(authUser.uid);
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
+      });
+      return;
+    }
+
+    const parsed = batchVerifyItemsSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: ErrorCodes.VALIDATION_ERROR,
+          message: 'アイテムIDの配列が必要です',
+          details: parsed.error.errors,
+        },
+      });
+      return;
+    }
+
+    const result = await batchVerifyItems(user.familyId, parsed.data.ids, parsed.data.verifyAt);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('Batch verify items error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: ErrorCodes.INTERNAL_ERROR, message: '持ち物の一括確認処理中にエラーが発生しました' },
     });
   }
 });

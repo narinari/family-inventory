@@ -279,3 +279,15 @@ export async function getInviteCodes(): Promise<InviteCode[]> {
   const res = await fetchWithAuth<{ inviteCodes: InviteCode[] }>('/auth/invites');
   return res.data?.inviteCodes ?? [];
 }
+
+// Inventory verification
+export async function verifyItem(id: string): Promise<ApiResponse<{ item: Item }>> {
+  return fetchWithAuth(`/items/${id}/verify`, { method: 'POST' });
+}
+
+export async function batchVerifyItems(ids: string[]): Promise<ApiResponse<{ verifiedCount: number; items: Item[] }>> {
+  return fetchWithAuth('/items/batch-verify', {
+    method: 'POST',
+    body: JSON.stringify({ ids }),
+  });
+}
