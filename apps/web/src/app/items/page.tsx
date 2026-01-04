@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
@@ -13,6 +13,8 @@ type StatusFilter = 'all' | ItemStatus;
 export default function ItemsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const typeIdFromUrl = searchParams.get('typeId');
   const [items, setItems] = useState<Item[]>([]);
   const [itemTypes, setItemTypes] = useState<ItemType[]>([]);
   const [boxes, setBoxes] = useState<Box[]>([]);
@@ -38,6 +40,7 @@ export default function ItemsPage() {
         tags?: string[];
         includeInheritedTags?: boolean;
         ownerId?: string;
+        typeId?: string;
       } = {};
       if (selectedTags.length > 0) {
         filter.tags = selectedTags;
@@ -46,12 +49,15 @@ export default function ItemsPage() {
       if (selectedOwnerId) {
         filter.ownerId = selectedOwnerId;
       }
+      if (typeIdFromUrl) {
+        filter.typeId = typeIdFromUrl;
+      }
       const itemsData = await getItems(filter);
       setItems(itemsData);
     } catch (error) {
       console.error('Failed to load items:', error);
     }
-  }, [selectedTags, includeInheritedTags, selectedOwnerId]);
+  }, [selectedTags, includeInheritedTags, selectedOwnerId, typeIdFromUrl]);
 
   useEffect(() => {
     if (user) {
@@ -150,6 +156,20 @@ export default function ItemsPage() {
             + 新規登録
           </Link>
         </div>
+
+        {typeIdFromUrl && (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4 flex items-center justify-between">
+            <span className="text-purple-800">
+              種別で絞り込み中: <strong>{itemTypeMap.get(typeIdFromUrl)?.name ?? '不明'}</strong>
+            </span>
+            <Link
+              href="/items"
+              className="text-purple-600 hover:text-purple-800 text-sm"
+            >
+              クリア
+            </Link>
+          </div>
+        )}
 
         <div className="bg-white rounded-xl shadow-sm p-4 mb-6 space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">

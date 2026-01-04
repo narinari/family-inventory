@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
-import { getItem, getBoxes, getMembers, updateItem } from '@/lib/api';
+import { getItem, getItems, getBoxes, getMembers, updateItem } from '@/lib/api';
 import type { Box, User, ItemWithRelatedTags, TagSource } from '@family-inventory/shared';
 
 export default function ItemDetailClient() {
@@ -17,6 +17,7 @@ export default function ItemDetailClient() {
   const [itemDetail, setItemDetail] = useState<ItemWithRelatedTags | null>(null);
   const [boxes, setBoxes] = useState<Box[]>([]);
   const [members, setMembers] = useState<User[]>([]);
+  const [relatedItemsCount, setRelatedItemsCount] = useState<number>(0);
   const [dataLoading, setDataLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -64,6 +65,10 @@ export default function ItemDetailClient() {
         memo: itemData.item.memo ?? '',
         tags: itemData.item.tags,
       });
+
+      // 同じ種別のアイテム数を取得
+      const relatedItems = await getItems({ typeId: itemData.item.itemTypeId });
+      setRelatedItemsCount(relatedItems.length);
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -248,6 +253,16 @@ export default function ItemDetailClient() {
                     '-'
                   )}
                 </dd>
+                {itemType && relatedItemsCount > 0 && (
+                  <dd className="mt-1">
+                    <Link
+                      href={`/items?typeId=${itemType.id}`}
+                      className="text-sm text-gray-500 hover:text-primary-600"
+                    >
+                      同じ種別のアイテム: {relatedItemsCount}件
+                    </Link>
+                  </dd>
+                )}
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">所有者</dt>
