@@ -55,6 +55,7 @@ export interface Item {
   givenTo?: string;
   soldTo?: string;
   soldPrice?: number;
+  lastVerifiedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

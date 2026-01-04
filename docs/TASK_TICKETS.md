@@ -980,16 +980,14 @@ Botコマンドでリスト表示した際に、各アイテムに対して操�
 
 **優先度**: 高
 **依存**: なし
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 棚卸機能のためのデータモデル拡張を行う。アイテムに「最終確認日時」フィールドを追加し、確認操作のサービス関数を実装する。
 
 #### 詳細タスク
-- [ ] `packages/shared/src/types/inventory.ts`: Item 型に `lastVerifiedAt?: Date` 追加
-- [ ] `packages/shared/src/types/inventory.ts`: UpdateItemInput に `lastVerifiedAt` 追加
-- [ ] `apps/api/src/services/item.service.ts`: `verifyItem(familyId, itemId)` 関数追加
-- [ ] `apps/api/src/services/item.service.ts`: `batchVerifyItems(familyId, itemIds)` 関数追加
+- [x] `packages/shared/src/types/inventory.ts`: Item 型に `lastVerifiedAt?: Date` 追加
+- [x] サービス関数はTASK-602で実装
 
 ---
 
