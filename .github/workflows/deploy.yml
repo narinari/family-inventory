@@ -129,7 +129,7 @@ jobs:
             --platform managed \
             --region ${{ env.GCP_REGION }} \
             --no-allow-unauthenticated \
-            --set-env-vars "NODE_ENV=production,API_BASE_URL=${{ needs.deploy-api.outputs.api_url }}" \
+            --set-env-vars "NODE_ENV=production,API_BASE_URL=${{ needs.deploy-api.outputs.api_url }},WEB_BASE_URL=https://${{ secrets.GCP_PROJECT_ID }}.web.app" \
             --set-secrets "BOT_TOKEN=discord-bot-token:latest,BOT_API_KEY=bot-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest" \
             --memory 512Mi \
             --min-instances 1 \
