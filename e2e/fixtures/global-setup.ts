@@ -1,4 +1,4 @@
-import { spawn, ChildProcess } from 'child_process';
+import { spawn } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -41,7 +41,7 @@ async function globalSetup() {
   console.log('Starting Firebase Emulators...');
 
   const projectRoot = path.resolve(__dirname, '../..');
-  const emulatorProcess: ChildProcess = spawn(
+  const emulatorProcess = spawn(
     'npx',
     [
       'firebase',

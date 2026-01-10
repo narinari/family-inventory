@@ -1,15 +1,10 @@
-import { test, expect, TEST_USER } from '../../fixtures/auth.fixture';
+import { test, expect, TEST_USER, E2EWindow } from '../../fixtures/auth.fixture';
 import { Page } from '@playwright/test';
 
-// API 経由でテストデータを作成するヘルパー関数
-async function createTestDataViaAPI(page: Page) {
+async function createTestDataViaAPI(page: Page): Promise<{ itemTypeId: string }> {
   return await page.evaluate(async (testUser) => {
-    const auth = (
-      window as unknown as {
-        __e2eAuth: { currentUser: { getIdToken: () => Promise<string> } };
-      }
-    ).__e2eAuth;
-    const token = await auth.currentUser.getIdToken();
+    const { __e2eAuth } = window as unknown as E2EWindow;
+    const token = await __e2eAuth.currentUser.getIdToken();
 
     const headers = {
       'Content-Type': 'application/json',
@@ -29,26 +24,17 @@ async function createTestDataViaAPI(page: Page) {
       throw new Error('Failed to create item type');
     }
 
-    // アイテムを作成
-    const item1Res = await fetch('http://localhost:3001/items', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        itemTypeId,
-        ownerId: testUser.uid,
-      }),
-    });
-    await item1Res.json();
-
-    const item2Res = await fetch('http://localhost:3001/items', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        itemTypeId,
-        ownerId: testUser.uid,
-      }),
-    });
-    await item2Res.json();
+    // アイテムを2件作成
+    for (let i = 0; i < 2; i++) {
+      await fetch('http://localhost:3001/items', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          itemTypeId,
+          ownerId: testUser.uid,
+        }),
+      });
+    }
 
     return { itemTypeId };
   }, TEST_USER);

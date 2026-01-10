@@ -1,4 +1,4 @@
-import { initializeApp, cert, getApps, deleteApp } from 'firebase-admin/app';
+import { initializeApp, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -166,12 +166,3 @@ export async function setupTestData(data: {
   await batch.commit();
 }
 
-/**
- * Admin アプリをクリーンアップ
- */
-export async function cleanupAdminApp(): Promise<void> {
-  const apps = getApps();
-  for (const app of apps) {
-    await deleteApp(app);
-  }
-}

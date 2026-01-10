@@ -1,4 +1,4 @@
-import { test, expect, TEST_USER } from '../../fixtures/auth.fixture';
+import { test, expect } from '../../fixtures/auth.fixture';
 
 test.describe('ログイン機能', () => {
   test('未認証ユーザーはログインページにリダイレクトされる', async ({
