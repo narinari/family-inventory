@@ -1,5 +1,10 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  connectAuthEmulator,
+  signInWithCustomToken,
+} from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -13,6 +18,28 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
 export const auth = getAuth(app);
+
+// Emulator 接続（e2e テスト用）
+const useEmulator = process.env.NEXT_PUBLIC_USE_EMULATOR === 'true';
+if (useEmulator && typeof window !== 'undefined') {
+  connectAuthEmulator(auth, 'http://localhost:9099', {
+    disableWarnings: true,
+  });
+  // e2e テスト用にグローバルに公開
+  (
+    window as unknown as {
+      __e2eAuth: typeof auth;
+      __e2eSignInWithCustomToken: typeof signInWithCustomToken;
+    }
+  ).__e2eAuth = auth;
+  (
+    window as unknown as {
+      __e2eAuth: typeof auth;
+      __e2eSignInWithCustomToken: typeof signInWithCustomToken;
+    }
+  ).__e2eSignInWithCustomToken = signInWithCustomToken;
+}
+
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
