@@ -26,18 +26,12 @@ if (useEmulator && typeof window !== 'undefined') {
     disableWarnings: true,
   });
   // e2e テスト用にグローバルに公開
-  (
-    window as unknown as {
-      __e2eAuth: typeof auth;
-      __e2eSignInWithCustomToken: typeof signInWithCustomToken;
-    }
-  ).__e2eAuth = auth;
-  (
-    window as unknown as {
-      __e2eAuth: typeof auth;
-      __e2eSignInWithCustomToken: typeof signInWithCustomToken;
-    }
-  ).__e2eSignInWithCustomToken = signInWithCustomToken;
+  const e2eWindow = window as unknown as {
+    __e2eAuth: typeof auth;
+    __e2eSignInWithCustomToken: typeof signInWithCustomToken;
+  };
+  e2eWindow.__e2eAuth = auth;
+  e2eWindow.__e2eSignInWithCustomToken = signInWithCustomToken;
 }
 
 export const googleProvider = new GoogleAuthProvider();
