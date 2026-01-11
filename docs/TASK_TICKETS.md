@@ -1140,6 +1140,229 @@ Botコマンドでリスト表示した際に、各アイテムに対して操�
 
 ---
 
+## Phase 7: コードリファクタリング
+
+code-simplifier エージェントを使用してAPIコードベースを段階的にリファクタリングする。
+コンテキスト溢れを防ぐため、機能単位でグループ化したタスクとして実施。
+
+### TASK-R01: 共通基盤の抽出
+
+**優先度**: 高
+**依存**: なし
+**ステータス**: 未着手
+
+#### 概要
+後続タスクで使用する共通ユーティリティを先に抽出する。
+
+#### 詳細タスク
+- [ ] `apps/api/src/utils/response.ts` 作成
+  - sendSuccess(res, data) - 成功レスポンス
+  - sendError(res, code, message, status, details?) - エラーレスポンス
+  - sendNotFound(res, entity) - 404レスポンス
+- [ ] `apps/api/src/utils/async-handler.ts` 作成
+  - asyncHandler(fn) - try-catchラッパー
+  - 自動エラーログ出力
+- [ ] `apps/api/src/utils/auth-helpers.ts` 作成
+  - requireUser(req, res) - 認証済みユーザー取得共通関数
+  - requireAdmin(req, res) - 管理者権限チェック
+- [ ] 既存テストが通ることを確認
+
+#### リファクタリング観点
+- DRY原則: 重複コードの削減
+- 単一責任: レスポンス構築を専用関数に
+
+---
+
+### TASK-R02: マスター/タグ リファクタリング
+
+**優先度**: 中
+**依存**: TASK-R01
+**ステータス**: 未着手
+
+#### 概要
+小規模ファイルから始めてリファクタリング手法を確立する。
+
+#### 対象ファイル
+- `routes/item-types.ts` (177行)
+- `routes/tags.ts` (158行)
+- `services/item-type.service.ts` (112行)
+- `services/tag.service.ts` (83行)
+
+#### 詳細タスク
+- [ ] item-types.ts に TASK-R01 のヘルパー適用
+- [ ] tags.ts に TASK-R01 のヘルパー適用
+- [ ] Zodスキーマを `schemas/` ディレクトリに分離（検討）
+- [ ] テスト確認: `pnpm --filter api test -- item-types tags`
+
+---
+
+### TASK-R03: 組織構造（Boxes/Locations）リファクタリング
+
+**優先度**: 中
+**依存**: TASK-R01
+**ステータス**: 未着手
+
+#### 概要
+類似ファイル（boxes/locations）の共通パターンを整理する。
+
+#### 対象ファイル
+- `routes/boxes.ts` (212行)
+- `routes/locations.ts` (212行)
+- `services/box.service.ts` (134行)
+- `services/location.service.ts` (125行)
+
+#### 詳細タスク
+- [ ] boxes.ts/locations.ts に TASK-R01 のヘルパー適用
+- [ ] 両ファイルの共通パターンを抽出（検討）
+- [ ] サービス層: `getXxxCollection(familyId)` パターンの共通化
+- [ ] テスト確認: `pnpm --filter api test -- boxes locations`
+
+---
+
+### TASK-R04: 認証/ユーザー リファクタリング
+
+**優先度**: 中
+**依存**: TASK-R01
+**ステータス**: 未着手
+
+#### 概要
+認証関連コードを機能別に整理する。
+
+#### 対象ファイル
+- `routes/auth.ts` (506行)
+- `services/auth.service.ts` (231行)
+
+#### 詳細タスク
+- [ ] auth.ts を機能別に整理（3セクション: 基本認証、Discord OAuth、Bot専用）
+- [ ] Discord OAuth 処理（約100行）を `discord-oauth.ts` に分離（検討）
+- [ ] TASK-R01 のヘルパー適用
+- [ ] テスト確認: `pnpm --filter api test -- discord-oauth`
+
+---
+
+### TASK-R05: 購入予定（Wishlist）リファクタリング
+
+**優先度**: 中
+**依存**: TASK-R01
+**ステータス**: 未着手
+
+#### 概要
+購入予定関連コードの状態遷移を明確化する。
+
+#### 対象ファイル
+- `routes/wishlist.ts` (264行)
+- `services/wishlist.service.ts` (227行)
+
+#### 詳細タスク
+- [ ] wishlist.ts に TASK-R01 のヘルパー適用
+- [ ] 状態遷移ロジック（purchase/cancel）の明確化
+- [ ] テスト確認: `pnpm --filter api test -- wishlist`
+
+---
+
+### TASK-R06: アイテム管理 リファクタリング
+
+**優先度**: 中
+**依存**: TASK-R01, TASK-R03
+**ステータス**: 未着手
+
+#### 概要
+最大規模のアイテム管理コードを整理する。
+
+#### 対象ファイル
+- `routes/items.ts` (450行)
+- `services/item.service.ts` (487行)
+
+#### 詳細タスク
+- [ ] items.ts に TASK-R01 のヘルパー適用
+- [ ] item.service.ts の機能分割検討
+  - 基本CRUD
+  - 状態変更（consume/give/sell）
+  - 位置情報（getItemLocation, getItemWithRelatedTags）
+- [ ] `getBoxesCollection`, `getLocationsCollection` の共通モジュール化
+- [ ] テスト確認: `pnpm --filter api test -- items`
+
+---
+
+### TASK-R07: Bot統合 リファクタリング（最大ファイル）
+
+**優先度**: 中
+**依存**: TASK-R01, TASK-R02, TASK-R03, TASK-R05, TASK-R06
+**ステータス**: 未着手
+
+#### 概要
+最大ファイル（784行）を機能別に分割する。
+
+#### 対象ファイル
+- `routes/bot.ts` (784行)
+
+#### 詳細タスク
+- [ ] routes/bot/ ディレクトリへ分割
+  - `routes/bot/items.ts` - アイテム関連 (~200行)
+  - `routes/bot/wishlist.ts` - 購入予定関連 (~150行)
+  - `routes/bot/boxes.ts` - 箱関連 (~80行)
+  - `routes/bot/locations.ts` - 保管場所関連 (~60行)
+  - `routes/bot/search.ts` - 検索関連 (~60行)
+  - `routes/bot/index.ts` - ルーター統合
+- [ ] `getUserFromDiscordId` パターンを共通ミドルウェア化
+- [ ] TASK-R01 のヘルパー適用
+- [ ] E2Eテストで動作確認
+
+---
+
+### TASK-R08: スキーマ整理（仕上げ）
+
+**優先度**: 低
+**依存**: TASK-R01〜R07
+**ステータス**: 未着手
+
+#### 概要
+各ルートに散在するZodスキーマを整理する。
+
+#### 詳細タスク
+- [ ] `apps/api/src/schemas/` ディレクトリ作成
+- [ ] 各ルートからZodスキーマを移動
+  - `schemas/item.schema.ts`
+  - `schemas/wishlist.schema.ts`
+  - `schemas/auth.schema.ts`
+  - etc.
+- [ ] スキーマの再利用性向上
+- [ ] 全テストが通ることを確認
+
+---
+
+### リファクタリング依存関係図
+
+```
+TASK-R01 (共通基盤)
+    ├──→ TASK-R02 (マスター/タグ)
+    ├──→ TASK-R03 (組織構造)
+    ├──→ TASK-R04 (認証)
+    ├──→ TASK-R05 (購入予定)
+    └──→ TASK-R06 (アイテム) ←── TASK-R03
+            └──→ TASK-R07 (Bot統合) ←── R02, R03, R05
+                    └──→ TASK-R08 (スキーマ整理)
+```
+
+### 推奨実行順序
+
+1. TASK-R01（必須の土台）
+2. TASK-R02（小規模で手法確立）
+3. TASK-R03（類似ファイルで効率化）
+4. TASK-R04（認証系独立）
+5. TASK-R05（中規模、独立性高い）
+6. TASK-R06（大規模、依存あり）
+7. TASK-R07（最大、全依存）
+8. TASK-R08（仕上げ）
+
+### 検証方法
+
+- `pnpm --filter api test` で全テスト通過
+- `pnpm type-check` で型チェック通過
+- `pnpm dev` で動作確認
+
+---
+
 ## 改訂履歴
 
 | バージョン | 日付 | 変更内容 |
@@ -1155,3 +1378,4 @@ Botコマンドでリスト表示した際に、各アイテムに対して操�
 | v1.8 | 2026-01-04 | TASK-601〜603 追加（棚卸機能） |
 | v1.9 | 2026-01-04 | TASK-604 追加（アイテム詳細から箱・保管場所へのリンク） |
 | v1.10 | 2026-01-11 | TASK-305 追加（リアクションによる自然言語処理トリガー） |
+| v1.11 | 2026-01-11 | Phase 7 追加（コードリファクタリング TASK-R01〜R08） |
