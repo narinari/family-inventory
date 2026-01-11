@@ -22,17 +22,14 @@ ls -la e2e/tests/
 ### 3. テンプレート
 
 ```typescript
-import { test, expect, TEST_USER } from '../../fixtures/auth.fixture';
+import { test, expect, TEST_USER, E2EWindow } from '../../fixtures/auth.fixture';
 import { Page } from '@playwright/test';
 
 // API 経由でテストデータを作成するヘルパー関数
 async function createTestData(page: Page) {
   return await page.evaluate(async (testUser) => {
-    const token = await (
-      window as unknown as {
-        __e2eAuth: { currentUser: { getIdToken: () => Promise<string> } };
-      }
-    ).__e2eAuth.currentUser.getIdToken();
+    const { __e2eAuth } = window as unknown as E2EWindow;
+    const token = await __e2eAuth.currentUser.getIdToken();
 
     const headers = {
       'Content-Type': 'application/json',
