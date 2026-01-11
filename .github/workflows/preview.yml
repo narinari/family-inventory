@@ -4,6 +4,20 @@ on:
   pull_request:
     branches:
       - main
+    paths-ignore:
+      # ドキュメント
+      - '*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      # 設定ファイル
+      - '.github/**'
+      - '.vscode/**'
+      - '.claude/**'
+      - '.editorconfig'
+      - '.gitignore'
+      - '.pre-commit-config.yaml'
+      # AIコンテキスト
+      - 'ai_context/**'
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
