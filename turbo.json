@@ -20,6 +20,15 @@
       "dependsOn": ["^build"],
       "cache": false
     },
+    "e2e": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "env": [
+        "FIREBASE_PROJECT_ID",
+        "FIRESTORE_EMULATOR_HOST",
+        "FIREBASE_AUTH_EMULATOR_HOST"
+      ]
+    },
     "seed": {
       "dependsOn": ["^build"],
       "cache": false

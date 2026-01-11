@@ -84,6 +84,7 @@
               pnpm
               claude-code
               gh
+              jdk # for Firebase Emulator
             ];
             inherit shellHook;
             buildInputs = enabledPackages;
