@@ -10,6 +10,7 @@ export type IntentType =
   | 'sell_item'             // 「○○売った」
   | 'list_items'            // 「○○の一覧見せて」
   | 'move_item'             // 「○○を△△に入れた」
+  | 'help'                  // 「ヘルプ」「使い方教えて」
   | 'unknown';
 
 export interface ParsedIntent {
@@ -39,6 +40,7 @@ const SYSTEM_PROMPT = `あなたは家族の持ち物管理アプリのアシス
 - sell_item: 物を売った（「○○売った」「○○売却した」）
 - list_items: 一覧表示（「○○の一覧」「○○を見せて」「○○リスト」）
 - move_item: 物を箱や場所に入れた（「○○を△△に入れた」「○○を△△にしまった」）
+- help: ヘルプや使い方を聞いている（「ヘルプ」「使い方」「何ができる？」「コマンド一覧」「教えて」）
 - unknown: 上記に該当しない
 
 回答は以下のJSON形式のみで返してください:
@@ -98,6 +100,7 @@ export async function parseNaturalLanguage(message: string): Promise<ParsedInten
       'sell_item',
       'list_items',
       'move_item',
+      'help',
       'unknown',
     ];
 

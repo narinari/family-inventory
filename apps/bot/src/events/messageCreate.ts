@@ -113,6 +113,9 @@ async function handleIntent(
     case 'move_item':
       return handleMoveItem(discordId, params.itemName, params.boxName);
 
+    case 'help':
+      return handleHelp();
+
     default:
       return {
         success: false,
@@ -379,4 +382,53 @@ async function handleMoveItem(
     success: false,
     message: `「${itemName}」を「${boxName}」に移動する機能は現在開発中です。\nWebサイトから操作してください。`,
   };
+}
+
+function handleHelp(): HandleResult {
+  const embed = new EmbedBuilder()
+    .setColor(0x5865f2)
+    .setTitle('ヘルプ - 使い方ガイド')
+    .setDescription('私に話しかけてくれれば、以下のことができます。')
+    .addFields(
+      {
+        name: '🔍 物の場所を聞く',
+        value: '「○○どこ？」「○○どこにある？」',
+      },
+      {
+        name: '📦 持ち物を登録',
+        value: '「○○買った」「○○もらった」「○○ゲットした」',
+      },
+      {
+        name: '🛒 欲しい物を追加',
+        value: '「○○欲しい」「○○買いたい」',
+      },
+      {
+        name: '📬 届いた物を記録',
+        value: '「○○届いた」「○○来た」',
+      },
+      {
+        name: '✅ 使い切った記録',
+        value: '「○○使い切った」「○○なくなった」「○○食べた」',
+      },
+      {
+        name: '🎁 あげた記録',
+        value: '「○○あげた」「○○を△△にあげた」',
+      },
+      {
+        name: '💰 売った記録',
+        value: '「○○売った」「○○を○円で売った」',
+      },
+      {
+        name: '📋 一覧表示',
+        value: '「持ち物一覧」「○○リスト」',
+      },
+      {
+        name: '💡 ヒント',
+        value: 'スラッシュコマンド `/help` で詳細なコマンド一覧も見れます。',
+      }
+    )
+    .setFooter({ text: 'Family Inventory Bot' })
+    .setTimestamp();
+
+  return { success: true, embed };
 }
