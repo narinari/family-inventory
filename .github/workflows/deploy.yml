@@ -4,6 +4,20 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      # ドキュメント
+      - '*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      # 設定ファイル
+      - '.github/**'
+      - '.vscode/**'
+      - '.claude/**'
+      - '.editorconfig'
+      - '.gitignore'
+      - '.pre-commit-config.yaml'
+      # AIコンテキスト
+      - 'ai_context/**'
   workflow_dispatch:
 
 env:
