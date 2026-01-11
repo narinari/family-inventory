@@ -3,12 +3,14 @@ import {
   Collection,
   GatewayIntentBits,
   Events,
+  Partials,
   type ChatInputCommandInteraction,
   type ButtonInteraction,
 } from 'discord.js';
 import { createServer } from 'node:http';
 import { commands } from './commands/index.js';
 import * as messageCreateEvent from './events/messageCreate.js';
+import * as messageReactionAddEvent from './events/messageReactionAdd.js';
 import { apiClient } from './lib/api-client.js';
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
@@ -30,7 +32,9 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMessageReactions,
   ],
+  partials: [Partials.Message, Partials.Reaction],
 });
 
 // Register commands
@@ -47,6 +51,9 @@ client.once(Events.ClientReady, (readyClient) => {
 
 // Message create event for natural language processing
 client.on(Events.MessageCreate, messageCreateEvent.execute);
+
+// Message reaction add event for NLP trigger with robot emoji
+client.on(Events.MessageReactionAdd, messageReactionAddEvent.execute);
 
 client.on(Events.InteractionCreate, async (interaction) => {
   // ボタンインタラクションの処理
