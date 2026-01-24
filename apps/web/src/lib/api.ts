@@ -70,6 +70,11 @@ export async function getItemTypes(): Promise<ItemType[]> {
   return res.data?.itemTypes ?? [];
 }
 
+export async function getItemType(id: string): Promise<ItemType | null> {
+  const res = await fetchWithAuth<{ itemType: ItemType }>(`/item-types/${id}`);
+  return res.data?.itemType ?? null;
+}
+
 export async function getBoxes(): Promise<Box[]> {
   const res = await fetchWithAuth<{ boxes: Box[] }>('/boxes');
   return res.data?.boxes ?? [];

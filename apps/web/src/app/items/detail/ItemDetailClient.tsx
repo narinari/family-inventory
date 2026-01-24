@@ -141,7 +141,7 @@ export default function ItemDetailClient() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
                 {itemType ? (
-                  <Link href={`/items?typeId=${itemType.id}`} className="hover:text-primary-600">
+                  <Link href={`/item-types/detail?id=${itemType.id}`} className="hover:text-primary-600">
                     {itemType.name}
                   </Link>
                 ) : (
@@ -254,7 +254,7 @@ export default function ItemDetailClient() {
                 <dt className="text-sm font-medium text-gray-500">アイテム種別</dt>
                 <dd className="mt-1 text-gray-900">
                   {itemType ? (
-                    <Link href={`/items?typeId=${itemType.id}`} className="text-primary-600 hover:text-primary-700">
+                    <Link href={`/item-types/detail?id=${itemType.id}`} className="text-primary-600 hover:text-primary-700">
                       {itemType.name}
                     </Link>
                   ) : (
