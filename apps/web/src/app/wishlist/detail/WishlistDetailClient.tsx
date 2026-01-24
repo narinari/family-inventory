@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
 import { TagSelector } from '@/components/common/TagSelector';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { getWishlistItem, getMembers, getTags, updateWishlistItem } from '@/lib/api';
 import type { Wishlist, User, Priority, Tag } from '@family-inventory/shared';
 
@@ -331,7 +332,9 @@ export default function WishlistDetailClient() {
               {wishlistItem.memo && (
                 <div>
                   <dt className="text-sm font-medium text-gray-500">メモ</dt>
-                  <dd className="mt-1 text-gray-900 whitespace-pre-wrap">{wishlistItem.memo}</dd>
+                  <dd className="mt-1 text-gray-900">
+                    <MarkdownRenderer content={wishlistItem.memo} />
+                  </dd>
                 </div>
               )}
               {wishlistItem.tags && wishlistItem.tags.length > 0 && (

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
 import { getItem, getItems, getBoxes, getMembers, updateItem } from '@/lib/api';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import type { Box, User, ItemWithRelatedTags, TagSource } from '@family-inventory/shared';
 
 export default function ItemDetailClient() {
@@ -313,7 +314,9 @@ export default function ItemDetailClient() {
               {item.memo && (
                 <div>
                   <dt className="text-sm font-medium text-gray-500">メモ</dt>
-                  <dd className="mt-1 text-gray-900 whitespace-pre-wrap">{item.memo}</dd>
+                  <dd className="mt-1 text-gray-900">
+                    <MarkdownRenderer content={item.memo} />
+                  </dd>
                 </div>
               )}
               <div>

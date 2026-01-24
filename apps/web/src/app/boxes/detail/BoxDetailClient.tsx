@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
 import { getBoxItems, getItemTypes, getLocations } from '@/lib/api';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import type { Box, Item, ItemType, Location } from '@family-inventory/shared';
 
 export default function BoxDetailClient() {
@@ -89,7 +90,9 @@ export default function BoxDetailClient() {
             <p className="text-gray-600">📍 {location.name}</p>
           )}
           {box.description && (
-            <p className="text-gray-600 mt-2">{box.description}</p>
+            <div className="text-gray-600 mt-2">
+              <MarkdownRenderer content={box.description} />
+            </div>
           )}
         </div>
 

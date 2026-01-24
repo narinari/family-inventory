@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
 import { getItemType, getItems, getTags, updateItemType, deleteItemType } from '@/lib/api';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import type { ItemType, Tag } from '@family-inventory/shared';
 
 export default function ItemTypeDetailClient() {
@@ -277,7 +278,9 @@ export default function ItemTypeDetailClient() {
               {itemType.description && (
                 <div>
                   <dt className="text-sm font-medium text-gray-500">説明</dt>
-                  <dd className="mt-1 text-gray-900 whitespace-pre-wrap">{itemType.description}</dd>
+                  <dd className="mt-1 text-gray-900">
+                    <MarkdownRenderer content={itemType.description} />
+                  </dd>
                 </div>
               )}
               {tagNames.length > 0 && (

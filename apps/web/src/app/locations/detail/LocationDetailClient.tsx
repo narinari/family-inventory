@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
 import { getLocationBoxes } from '@/lib/api';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import type { Location, Box } from '@family-inventory/shared';
 
 export default function LocationDetailClient() {
@@ -77,7 +78,9 @@ export default function LocationDetailClient() {
             <p className="text-gray-600">{location.address}</p>
           )}
           {location.description && (
-            <p className="text-gray-600 mt-2">{location.description}</p>
+            <div className="text-gray-600 mt-2">
+              <MarkdownRenderer content={location.description} />
+            </div>
           )}
         </div>
 
