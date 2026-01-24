@@ -152,14 +152,22 @@ export default function ItemDetailClient() {
                 {statusConfig[item.status].label}
               </span>
             </div>
-            {item.status === 'owned' && !editing && (
-              <button
-                onClick={() => setEditing(true)}
+            <div className="flex gap-2">
+              {item.status === 'owned' && !editing && (
+                <button
+                  onClick={() => setEditing(true)}
+                  className="px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg"
+                >
+                  編集
+                </button>
+              )}
+              <Link
+                href={`/items/new?templateFrom=${item.id}`}
                 className="px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg"
               >
-                編集
-              </button>
-            )}
+                同じものを追加
+              </Link>
+            </div>
           </div>
 
           {error && (

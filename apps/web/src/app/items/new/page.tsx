@@ -1,16 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
-import { getItemTypes, getBoxes, getMembers, createItem, createItemType } from '@/lib/api';
+import { getItemTypes, getBoxes, getMembers, createItem, createItemType, getItem } from '@/lib/api';
 import type { ItemType, Box, User } from '@family-inventory/shared';
 
 export default function NewItemPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const templateFromId = searchParams.get('templateFrom');
+
   const [itemTypes, setItemTypes] = useState<ItemType[]>([]);
   const [boxes, setBoxes] = useState<Box[]>([]);
   const [members, setMembers] = useState<User[]>([]);
@@ -18,6 +21,7 @@ export default function NewItemPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showNewItemType, setShowNewItemType] = useState(false);
+  const [templateItemName, setTemplateItemName] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     itemTypeId: '',
@@ -38,7 +42,7 @@ export default function NewItemPage() {
     if (user) {
       loadData();
     }
-  }, [user]);
+  }, [user, templateFromId]);
 
   async function loadData() {
     try {
@@ -50,6 +54,23 @@ export default function NewItemPage() {
       setItemTypes(typesData);
       setBoxes(boxesData);
       setMembers(membersData);
+
+      // テンプレートからのプリセット
+      if (templateFromId) {
+        const templateData = await getItem(templateFromId);
+        if (templateData) {
+          const { item, itemType } = templateData;
+          setFormData({
+            itemTypeId: item.itemTypeId,
+            ownerId: '', // 所有者は自分にリセット
+            boxId: item.boxId ?? '',
+            memo: item.memo ?? '',
+          });
+          if (itemType) {
+            setTemplateItemName(itemType.name);
+          }
+        }
+      }
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -122,7 +143,14 @@ export default function NewItemPage() {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">持ち物を登録</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">
+            {templateItemName ? `${templateItemName} を追加` : '持ち物を登録'}
+          </h1>
+          {templateItemName && (
+            <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-lg text-sm">
+              「{templateItemName}」の情報をもとに新しいアイテムを登録します。必要に応じて変更してください。
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 p-4 bg-red-50 text-red-700 rounded-lg">{error}</div>
