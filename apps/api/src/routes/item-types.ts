@@ -4,6 +4,7 @@ import { authenticateToken } from '../middleware/auth.js';
 import { getUserByUid } from '../services/auth.service.js';
 import {
   getItemTypes,
+  getItemTypeById,
   createItemType,
   updateItemType,
   deleteItemType,
@@ -44,6 +45,38 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
     res.json({ success: true, data: { itemTypes } });
   } catch (error) {
     console.error('Get item types error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: ErrorCodes.INTERNAL_ERROR, message: 'アイテム種別の取得中にエラーが発生しました' },
+    });
+  }
+});
+
+router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const authUser = req.authUser!;
+    const user = await getUserByUid(authUser.uid);
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
+      });
+      return;
+    }
+
+    const itemType = await getItemTypeById(user.familyId, req.params.id);
+    if (!itemType) {
+      res.status(404).json({
+        success: false,
+        error: { code: 'ITEM_TYPE_NOT_FOUND', message: 'アイテム種別が見つかりません' },
+      });
+      return;
+    }
+
+    res.json({ success: true, data: { itemType } });
+  } catch (error) {
+    console.error('Get item type error:', error);
     res.status(500).json({
       success: false,
       error: { code: ErrorCodes.INTERNAL_ERROR, message: 'アイテム種別の取得中にエラーが発生しました' },

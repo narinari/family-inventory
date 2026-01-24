@@ -202,14 +202,22 @@ describe('families/{familyId}/itemTypes', () => {
       );
     });
 
-    it('should deny member delete', async () => {
+    it('should allow member to delete', async () => {
       const authDb = getAuthContext(memberId).firestore();
-      await assertFails(
+      await assertSucceeds(
         deleteDoc(doc(authDb, 'families', familyId, 'itemTypes', 'type-1'))
       );
     });
 
     it('should allow admin to delete', async () => {
+      // Re-create after member delete test
+      await withSecurityRulesDisabled(async (context) => {
+        const db = context.firestore();
+        await setDoc(
+          doc(db, 'families', familyId, 'itemTypes', 'type-1'),
+          createTestItemType()
+        );
+      });
       const authDb = getAuthContext(adminId).firestore();
       await assertSucceeds(
         deleteDoc(doc(authDb, 'families', familyId, 'itemTypes', 'type-1'))

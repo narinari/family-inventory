@@ -119,7 +119,7 @@ service cloud.firestore {
 
         allow update: if isFamilyMember(familyId);
 
-        allow delete: if isFamilyAdmin(familyId);
+        allow delete: if isFamilyMember(familyId);
       }
 
       // ============================================

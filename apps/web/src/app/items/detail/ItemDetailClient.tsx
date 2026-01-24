@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
 import { getItem, getItems, getBoxes, getMembers, updateItem } from '@/lib/api';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import type { Box, User, ItemWithRelatedTags, TagSource } from '@family-inventory/shared';
 
 export default function ItemDetailClient() {
@@ -141,7 +142,7 @@ export default function ItemDetailClient() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
                 {itemType ? (
-                  <Link href={`/items?typeId=${itemType.id}`} className="hover:text-primary-600">
+                  <Link href={`/item-types/detail?id=${itemType.id}`} className="hover:text-primary-600">
                     {itemType.name}
                   </Link>
                 ) : (
@@ -152,14 +153,22 @@ export default function ItemDetailClient() {
                 {statusConfig[item.status].label}
               </span>
             </div>
-            {item.status === 'owned' && !editing && (
-              <button
-                onClick={() => setEditing(true)}
+            <div className="flex gap-2">
+              {item.status === 'owned' && !editing && (
+                <button
+                  onClick={() => setEditing(true)}
+                  className="px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg"
+                >
+                  編集
+                </button>
+              )}
+              <Link
+                href={`/items/new?templateFrom=${item.id}`}
                 className="px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg"
               >
-                編集
-              </button>
-            )}
+                同じものを追加
+              </Link>
+            </div>
           </div>
 
           {error && (
@@ -246,7 +255,7 @@ export default function ItemDetailClient() {
                 <dt className="text-sm font-medium text-gray-500">アイテム種別</dt>
                 <dd className="mt-1 text-gray-900">
                   {itemType ? (
-                    <Link href={`/items?typeId=${itemType.id}`} className="text-primary-600 hover:text-primary-700">
+                    <Link href={`/item-types/detail?id=${itemType.id}`} className="text-primary-600 hover:text-primary-700">
                       {itemType.name}
                     </Link>
                   ) : (
@@ -305,7 +314,9 @@ export default function ItemDetailClient() {
               {item.memo && (
                 <div>
                   <dt className="text-sm font-medium text-gray-500">メモ</dt>
-                  <dd className="mt-1 text-gray-900 whitespace-pre-wrap">{item.memo}</dd>
+                  <dd className="mt-1 text-gray-900">
+                    <MarkdownRenderer content={item.memo} />
+                  </dd>
                 </div>
               )}
               <div>

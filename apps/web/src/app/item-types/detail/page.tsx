@@ -1,7 +1,9 @@
-import { Suspense } from 'react';
-import NewItemClient from './NewItemClient';
+'use client';
 
-export default function NewItemPage() {
+import { Suspense } from 'react';
+import ItemTypeDetailClient from './ItemTypeDetailClient';
+
+export default function ItemTypeDetailPage() {
   return (
     <Suspense
       fallback={
@@ -10,7 +12,7 @@ export default function NewItemPage() {
         </div>
       }
     >
-      <NewItemClient />
+      <ItemTypeDetailClient />
     </Suspense>
   );
 }
