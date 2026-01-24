@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
-import { getItemTypes, getBoxes, getMembers, createItem, createItemType, getItem } from '@/lib/api';
-import type { ItemType, Box, User } from '@family-inventory/shared';
+import { getItemTypes, getBoxes, getMembers, getTags, createItem, createItemType, getItem } from '@/lib/api';
+import { ItemTypeSelector } from '@/components/common/ItemTypeSelector';
+import type { ItemType, Box, User, Tag } from '@family-inventory/shared';
 
 export default function NewItemClient() {
   const { user, loading } = useAuth();
@@ -17,6 +18,7 @@ export default function NewItemClient() {
   const [itemTypes, setItemTypes] = useState<ItemType[]>([]);
   const [boxes, setBoxes] = useState<Box[]>([]);
   const [members, setMembers] = useState<User[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,14 +48,16 @@ export default function NewItemClient() {
 
   async function loadData() {
     try {
-      const [typesData, boxesData, membersData] = await Promise.all([
+      const [typesData, boxesData, membersData, tagsData] = await Promise.all([
         getItemTypes(),
         getBoxes(),
         getMembers(),
+        getTags(),
       ]);
       setItemTypes(typesData);
       setBoxes(boxesData);
       setMembers(membersData);
+      setTags(tagsData);
 
       // テンプレートからのプリセット
       if (templateFromId) {
@@ -188,26 +192,22 @@ export default function NewItemClient() {
                   </button>
                 </div>
               ) : (
-                <div className="flex gap-2">
-                  <select
-                    value={formData.itemTypeId}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, itemTypeId: e.target.value }))}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  >
-                    <option value="">選択してください</option>
-                    {itemTypes.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.name}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => setShowNewItemType(true)}
-                    className="px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg"
-                  >
-                    + 新規
-                  </button>
+                <div className="space-y-2">
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setShowNewItemType(true)}
+                      className="px-3 py-1 text-sm text-primary-600 hover:bg-primary-50 rounded-lg"
+                    >
+                      + 新規作成
+                    </button>
+                  </div>
+                  <ItemTypeSelector
+                    itemTypes={itemTypes}
+                    availableTags={tags}
+                    selectedId={formData.itemTypeId}
+                    onChange={(itemTypeId) => setFormData((prev) => ({ ...prev, itemTypeId }))}
+                  />
                 </div>
               )}
             </div>
