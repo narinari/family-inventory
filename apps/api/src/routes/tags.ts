@@ -1,9 +1,16 @@
-import { Router, type Request, type Response } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
 import { authenticateToken } from '../middleware/auth.js';
-import { getUserByUid } from '../services/auth.service.js';
 import { getTags, createTag, updateTag, deleteTag } from '../services/tag.service.js';
-import { ErrorCodes } from '@family-inventory/shared';
+import {
+  sendSuccess,
+  sendCreated,
+  sendNotFound,
+  sendValidationError,
+  sendMessage,
+  asyncHandler,
+  requireUser,
+} from '../utils/index.js';
 
 const router: Router = Router();
 
@@ -17,142 +24,78 @@ const updateTagSchema = z.object({
   color: z.string().max(20).trim().optional(),
 });
 
-router.get('/', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+// GET / - タグ一覧取得
+router.get(
+  '/',
+  authenticateToken,
+  asyncHandler(async (req, res) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     const tags = await getTags(user.familyId);
-    res.json({ success: true, data: { tags } });
-  } catch (error) {
-    console.error('Get tags error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: 'タグの取得中にエラーが発生しました' },
-    });
-  }
-});
+    sendSuccess(res, { tags });
+  }, 'タグの取得中にエラーが発生しました')
+);
 
-router.post('/', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+// POST / - タグ新規作成
+router.post(
+  '/',
+  authenticateToken,
+  asyncHandler(async (req, res) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     const parsed = createTagSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: ErrorCodes.VALIDATION_ERROR,
-          message: '入力内容を確認してください',
-          details: parsed.error.errors,
-        },
-      });
+      sendValidationError(res, parsed.error.errors);
       return;
     }
 
     const tag = await createTag(user.familyId, parsed.data);
-    res.status(201).json({ success: true, data: { tag } });
-  } catch (error) {
-    console.error('Create tag error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: 'タグの作成中にエラーが発生しました' },
-    });
-  }
-});
+    sendCreated(res, { tag });
+  }, 'タグの作成中にエラーが発生しました')
+);
 
-router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+// PUT /:id - タグ更新
+router.put(
+  '/:id',
+  authenticateToken,
+  asyncHandler(async (req, res) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     const parsed = updateTagSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: ErrorCodes.VALIDATION_ERROR,
-          message: '入力内容を確認してください',
-          details: parsed.error.errors,
-        },
-      });
+      sendValidationError(res, parsed.error.errors);
       return;
     }
 
     const tag = await updateTag(user.familyId, req.params.id, parsed.data);
     if (!tag) {
-      res.status(404).json({
-        success: false,
-        error: { code: 'TAG_NOT_FOUND', message: 'タグが見つかりません' },
-      });
+      sendNotFound(res, 'タグ', 'TAG_NOT_FOUND');
       return;
     }
 
-    res.json({ success: true, data: { tag } });
-  } catch (error) {
-    console.error('Update tag error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: 'タグの更新中にエラーが発生しました' },
-    });
-  }
-});
+    sendSuccess(res, { tag });
+  }, 'タグの更新中にエラーが発生しました')
+);
 
-router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+// DELETE /:id - タグ削除
+router.delete(
+  '/:id',
+  authenticateToken,
+  asyncHandler(async (req, res) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     const deleted = await deleteTag(user.familyId, req.params.id);
     if (!deleted) {
-      res.status(404).json({
-        success: false,
-        error: { code: 'TAG_NOT_FOUND', message: 'タグが見つかりません' },
-      });
+      sendNotFound(res, 'タグ', 'TAG_NOT_FOUND');
       return;
     }
 
-    res.json({ success: true, data: { message: 'タグを削除しました' } });
-  } catch (error) {
-    console.error('Delete tag error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: 'タグの削除中にエラーが発生しました' },
-    });
-  }
-});
+    sendMessage(res, 'タグを削除しました');
+  }, 'タグの削除中にエラーが発生しました')
+);
 
 export default router;
