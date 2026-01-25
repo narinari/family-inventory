@@ -1220,23 +1220,23 @@ code-simplifier エージェントを使用してAPIコードベースを段階�
 
 **優先度**: 高
 **依存**: なし
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 後続タスクで使用する共通ユーティリティを先に抽出する。
 
 #### 詳細タスク
-- [ ] `apps/api/src/utils/response.ts` 作成
+- [x] `apps/api/src/utils/response.ts` 作成
   - sendSuccess(res, data) - 成功レスポンス
   - sendError(res, code, message, status, details?) - エラーレスポンス
   - sendNotFound(res, entity) - 404レスポンス
-- [ ] `apps/api/src/utils/async-handler.ts` 作成
+- [x] `apps/api/src/utils/async-handler.ts` 作成
   - asyncHandler(fn) - try-catchラッパー
   - 自動エラーログ出力
-- [ ] `apps/api/src/utils/auth-helpers.ts` 作成
+- [x] `apps/api/src/utils/auth-helpers.ts` 作成
   - requireUser(req, res) - 認証済みユーザー取得共通関数
   - requireAdmin(req, res) - 管理者権限チェック
-- [ ] 既存テストが通ることを確認
+- [x] 既存テストが通ることを確認
 
 #### リファクタリング観点
 - DRY原則: 重複コードの削減
@@ -1248,22 +1248,22 @@ code-simplifier エージェントを使用してAPIコードベースを段階�
 
 **優先度**: 中
 **依存**: TASK-R01
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 小規模ファイルから始めてリファクタリング手法を確立する。
 
 #### 対象ファイル
-- `routes/item-types.ts` (177行)
-- `routes/tags.ts` (158行)
-- `services/item-type.service.ts` (112行)
-- `services/tag.service.ts` (83行)
+- `routes/item-types.ts` (210行 → 137行)
+- `routes/tags.ts` (158行 → 101行)
+- `services/item-type.service.ts` (112行) - 変更なし
+- `services/tag.service.ts` (83行) - 変更なし
 
 #### 詳細タスク
-- [ ] item-types.ts に TASK-R01 のヘルパー適用
-- [ ] tags.ts に TASK-R01 のヘルパー適用
-- [ ] Zodスキーマを `schemas/` ディレクトリに分離（検討）
-- [ ] テスト確認: `pnpm --filter api test -- item-types tags`
+- [x] item-types.ts に TASK-R01 のヘルパー適用
+- [x] tags.ts に TASK-R01 のヘルパー適用
+- [ ] Zodスキーマを `schemas/` ディレクトリに分離（TASK-R08で検討）
+- [x] テスト確認: `pnpm --filter api test -- item-types tags`
 
 ---
 
@@ -1271,22 +1271,22 @@ code-simplifier エージェントを使用してAPIコードベースを段階�
 
 **優先度**: 中
 **依存**: TASK-R01
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 類似ファイル（boxes/locations）の共通パターンを整理する。
 
 #### 対象ファイル
-- `routes/boxes.ts` (212行)
-- `routes/locations.ts` (212行)
-- `services/box.service.ts` (134行)
-- `services/location.service.ts` (125行)
+- `routes/boxes.ts` (212行 → 139行)
+- `routes/locations.ts` (212行 → 139行)
+- `services/box.service.ts` (134行) - 変更なし
+- `services/location.service.ts` (125行) - 変更なし
 
 #### 詳細タスク
-- [ ] boxes.ts/locations.ts に TASK-R01 のヘルパー適用
-- [ ] 両ファイルの共通パターンを抽出（検討）
-- [ ] サービス層: `getXxxCollection(familyId)` パターンの共通化
-- [ ] テスト確認: `pnpm --filter api test -- boxes locations`
+- [x] boxes.ts/locations.ts に TASK-R01 のヘルパー適用
+- [ ] 両ファイルの共通パターンを抽出（後続タスクで検討）
+- [ ] サービス層: `getXxxCollection(familyId)` パターンの共通化（後続タスクで検討）
+- [x] テスト確認: `pnpm --filter api test -- boxes locations`
 
 ---
 
