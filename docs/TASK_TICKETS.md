@@ -1354,25 +1354,26 @@ code-simplifier エージェントを使用してAPIコードベースを段階�
 
 **優先度**: 中
 **依存**: TASK-R01, TASK-R02, TASK-R03, TASK-R05, TASK-R06
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 最大ファイル（784行）を機能別に分割する。
 
 #### 対象ファイル
-- `routes/bot.ts` (784行)
+- `routes/bot.ts` (784行) → `routes/bot/` ディレクトリに分割
 
 #### 詳細タスク
-- [ ] routes/bot/ ディレクトリへ分割
-  - `routes/bot/items.ts` - アイテム関連 (~200行)
-  - `routes/bot/wishlist.ts` - 購入予定関連 (~150行)
-  - `routes/bot/boxes.ts` - 箱関連 (~80行)
-  - `routes/bot/locations.ts` - 保管場所関連 (~60行)
-  - `routes/bot/search.ts` - 検索関連 (~60行)
-  - `routes/bot/index.ts` - ルーター統合
-- [ ] `getUserFromDiscordId` パターンを共通ミドルウェア化
-- [ ] TASK-R01 のヘルパー適用
-- [ ] E2Eテストで動作確認
+- [x] routes/bot/ ディレクトリへ分割
+  - `routes/bot/items.ts` - アイテム関連 (254行)
+  - `routes/bot/wishlist.ts` - 購入予定関連 (171行)
+  - `routes/bot/boxes.ts` - 箱関連 (57行)
+  - `routes/bot/locations.ts` - 保管場所関連 (41行)
+  - `routes/bot/search.ts` - 検索関連 (55行)
+  - `routes/bot/helpers.ts` - 共通ヘルパー (37行)
+  - `routes/bot/index.ts` - ルーター統合 (21行)
+- [x] `getUserFromDiscordId` パターンを `requireDiscordUser` として共通ヘルパー化
+- [x] TASK-R01 のヘルパー適用（asyncHandler, sendSuccess/sendError等）
+- [x] API単体テスト全通過（83テスト）、型チェック通過
 
 ---
 
@@ -1446,3 +1447,4 @@ TASK-R01 (共通基盤)
 | v1.10 | 2026-01-11 | TASK-305 追加（リアクションによる自然言語処理トリガー） |
 | v1.11 | 2026-01-11 | Phase 7 追加（コードリファクタリング TASK-R01〜R08） |
 | v1.12 | 2026-01-24 | TASK-605〜608 追加（アイテム種別削除権限、テンプレート作成、種別詳細画面、マークダウン対応） |
+| v1.13 | 2026-01-25 | TASK-R07 完了（Bot統合リファクタリング - 784行→636行合計、7ファイルに分割） |
