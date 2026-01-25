@@ -4,54 +4,72 @@ on:
   pull_request:
     branches:
       - main
-    paths-ignore:
-      # ドキュメント
-      - '*.md'
-      - 'docs/**'
-      - 'LICENSE'
-      # 設定ファイル
-      - '.github/**'
-      - '.vscode/**'
-      - '.claude/**'
-      - '.editorconfig'
-      - '.gitignore'
-      - '.pre-commit-config.yaml'
-      # AIコンテキスト
-      - 'ai_context/**'
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
 
 jobs:
-  # ビルドとテスト
-  build:
+  # 変更検出
+  changes:
     runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
     steps:
       - uses: actions/checkout@v4
 
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - 'apps/**'
+              - 'packages/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'tsconfig*.json'
+              - 'firebase.json'
+              - 'firestore.*'
+
+  # ビルドとテスト
+  build:
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip if no code changes
+        if: needs.changes.outputs.code != 'true'
+        run: echo "No code changes detected, skipping build"
+
+      - uses: actions/checkout@v4
+        if: needs.changes.outputs.code == 'true'
+
       - name: Setup pnpm
+        if: needs.changes.outputs.code == 'true'
         uses: pnpm/action-setup@v4
         with:
           version: 9.15.0
 
       - name: Setup Node.js
+        if: needs.changes.outputs.code == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'pnpm'
 
       - name: Install dependencies
+        if: needs.changes.outputs.code == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Type check
+        if: needs.changes.outputs.code == 'true'
         run: pnpm type-check
 
       - name: Lint
+        if: needs.changes.outputs.code == 'true'
         run: pnpm lint
 
   # Web のプレビューデプロイ
   preview-web:
-    needs: build
+    needs: [changes, build]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -60,29 +78,39 @@ jobs:
       id-token: write
 
     steps:
+      - name: Skip if no code changes
+        if: needs.changes.outputs.code != 'true'
+        run: echo "No code changes detected, skipping preview deploy"
+
       - uses: actions/checkout@v4
+        if: needs.changes.outputs.code == 'true'
 
       - name: Setup pnpm
+        if: needs.changes.outputs.code == 'true'
         uses: pnpm/action-setup@v4
         with:
           version: 9.15.0
 
       - name: Setup Node.js
+        if: needs.changes.outputs.code == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'pnpm'
 
       - name: Authenticate to Google Cloud
+        if: needs.changes.outputs.code == 'true'
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Install dependencies
+        if: needs.changes.outputs.code == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Create .env.local for Web
+        if: needs.changes.outputs.code == 'true'
         run: |
           cat > apps/web/.env.local << EOF
           NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
@@ -95,9 +123,11 @@ jobs:
           EOF
 
       - name: Build Web
+        if: needs.changes.outputs.code == 'true'
         run: pnpm --filter @family-inventory/shared build && pnpm --filter web build
 
       - name: Deploy Preview to Firebase Hosting
+        if: needs.changes.outputs.code == 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
