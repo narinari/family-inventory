@@ -22,7 +22,7 @@ vi.mock('../services/auth.service.js', () => ({
 
 // Mock the item service
 const mockGetItems = vi.fn();
-const mockGetItemById = vi.fn();
+const mockGetItemWithRelatedTags = vi.fn();
 const mockCreateItem = vi.fn();
 const mockUpdateItem = vi.fn();
 const mockConsumeItem = vi.fn();
@@ -32,7 +32,7 @@ const mockGetItemLocation = vi.fn();
 
 vi.mock('../services/item.service.js', () => ({
   getItems: (...args: unknown[]) => mockGetItems(...args),
-  getItemById: (...args: unknown[]) => mockGetItemById(...args),
+  getItemWithRelatedTags: (...args: unknown[]) => mockGetItemWithRelatedTags(...args),
   createItem: (...args: unknown[]) => mockCreateItem(...args),
   updateItem: (...args: unknown[]) => mockUpdateItem(...args),
   consumeItem: (...args: unknown[]) => mockConsumeItem(...args),
@@ -98,7 +98,7 @@ describe('Items API', () => {
   describe('GET /items/:id', () => {
     it('should return item by id', async () => {
       mockGetUserByUid.mockResolvedValue(mockUser);
-      mockGetItemById.mockResolvedValue(mockItem);
+      mockGetItemWithRelatedTags.mockResolvedValue({ item: mockItem, relatedTags: {} });
 
       const response = await request(app).get('/items/item-1');
 
@@ -108,7 +108,7 @@ describe('Items API', () => {
 
     it('should return 404 if item not found', async () => {
       mockGetUserByUid.mockResolvedValue(mockUser);
-      mockGetItemById.mockResolvedValue(null);
+      mockGetItemWithRelatedTags.mockResolvedValue(null);
 
       const response = await request(app).get('/items/not-found');
 

@@ -15,6 +15,9 @@ import {
   updateUserProfile,
 } from '../services/auth.service.js';
 import { ErrorCodes } from '@family-inventory/shared';
+import { asyncHandler } from '../utils/async-handler.js';
+import { requireUser, requireAdmin } from '../utils/auth-helpers.js';
+import { sendSuccess, sendError, sendNotFound, sendValidationError, sendMessage } from '../utils/response.js';
 
 const router: Router = Router();
 
@@ -35,52 +38,38 @@ const updateProfileSchema = z
     message: '更新するフィールドが必要です',
   });
 
-router.post('/login', authenticateToken, async (req: Request, res: Response) => {
-  try {
+router.post(
+  '/login',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
     const authUser = req.authUser!;
     const existingUser = await getUserByUid(authUser.uid);
 
     if (existingUser) {
-      res.json({
-        success: true,
-        data: { user: existingUser, isNewUser: false, needsInviteCode: false },
-      });
+      sendSuccess(res, { user: existingUser, isNewUser: false, needsInviteCode: false });
       return;
     }
 
     // New users always need an invite code
-    res.json({
-      success: true,
-      data: { user: null, isNewUser: true, needsInviteCode: true },
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: 'ログイン処理中にエラーが発生しました' },
-    });
-  }
-});
+    sendSuccess(res, { user: null, isNewUser: true, needsInviteCode: true });
+  }, 'ログイン処理中にエラーが発生しました')
+);
 
-router.post('/join', authenticateToken, async (req: Request, res: Response) => {
-  try {
+router.post(
+  '/join',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
     const authUser = req.authUser!;
 
     const existingUser = await getUserByUid(authUser.uid);
     if (existingUser) {
-      res.status(400).json({
-        success: false,
-        error: { code: ErrorCodes.USER_ALREADY_EXISTS, message: '既に登録済みです' },
-      });
+      sendError(res, ErrorCodes.USER_ALREADY_EXISTS, '既に登録済みです', 400);
       return;
     }
 
     const parsed = joinSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        error: { code: ErrorCodes.VALIDATION_ERROR, message: '招待コードを入力してください', details: parsed.error.errors },
-      });
+      sendError(res, ErrorCodes.VALIDATION_ERROR, '招待コードを入力してください', 400, parsed.error.errors);
       return;
     }
 
@@ -88,176 +77,89 @@ router.post('/join', authenticateToken, async (req: Request, res: Response) => {
     const validation = await validateInviteCode(inviteCode);
 
     if (!validation.valid) {
-      res.status(400).json({
-        success: false,
-        error: { code: ErrorCodes.INVITE_CODE_INVALID, message: validation.error },
-      });
+      sendError(res, ErrorCodes.INVITE_CODE_INVALID, validation.error!, 400);
       return;
     }
 
     const user = await createUser(authUser, validation.familyId!, false);
     await useInviteCode(validation.inviteCodeId!, authUser.uid);
 
-    res.json({ success: true, data: { user } });
-  } catch (error) {
-    console.error('Join error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: '参加処理中にエラーが発生しました' },
-    });
-  }
-});
+    sendSuccess(res, { user });
+  }, '参加処理中にエラーが発生しました')
+);
 
-router.get('/me', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
+router.get(
+  '/me',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+    sendSuccess(res, { user });
+  }, 'ユーザー情報の取得中にエラーが発生しました')
+);
 
-    res.json({ success: true, data: { user } });
-  } catch (error) {
-    console.error('Get me error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: 'ユーザー情報の取得中にエラーが発生しました' },
-    });
-  }
-});
-
-router.put('/me', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+router.put(
+  '/me',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     const parsed = updateProfileSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: ErrorCodes.VALIDATION_ERROR,
-          message: '入力内容を確認してください',
-          details: parsed.error.errors,
-        },
-      });
+      sendValidationError(res, parsed.error.errors);
       return;
     }
 
-    const updatedUser = await updateUserProfile(authUser.uid, parsed.data);
-    res.json({ success: true, data: { user: updatedUser } });
-  } catch (error) {
-    console.error('Update profile error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: 'プロフィール更新中にエラーが発生しました' },
-    });
-  }
-});
-
-router.get('/members', authenticateToken, async (req: Request, res: Response) => {
-  try {
     const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
+    const updatedUser = await updateUserProfile(authUser.uid, parsed.data);
+    sendSuccess(res, { user: updatedUser });
+  }, 'プロフィール更新中にエラーが発生しました')
+);
 
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+router.get(
+  '/members',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     const members = await getFamilyMembers(user.familyId);
-    res.json({ success: true, data: { members } });
-  } catch (error) {
-    console.error('Get members error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: 'メンバー一覧の取得中にエラーが発生しました' },
-    });
-  }
-});
+    sendSuccess(res, { members });
+  }, 'メンバー一覧の取得中にエラーが発生しました')
+);
 
-router.post('/invite', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
+router.post(
+  '/invite',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
-
-    if (user.role !== 'admin') {
-      res.status(403).json({
-        success: false,
-        error: { code: ErrorCodes.NOT_ADMIN, message: '招待コードの発行は管理者のみ可能です' },
-      });
-      return;
-    }
+    if (!requireAdmin(user, res)) return;
 
     const parsed = createInviteSchema.safeParse(req.body);
     const expiresInDays = parsed.success ? parsed.data.expiresInDays : 7;
 
     const inviteCode = await createInviteCode(user.familyId, user.id, expiresInDays);
-    res.json({ success: true, data: { inviteCode } });
-  } catch (error) {
-    console.error('Create invite error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: '招待コードの発行中にエラーが発生しました' },
-    });
-  }
-});
+    sendSuccess(res, { inviteCode });
+  }, '招待コードの発行中にエラーが発生しました')
+);
 
-router.get('/invites', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
+router.get(
+  '/invites',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
-
-    if (user.role !== 'admin') {
-      res.status(403).json({
-        success: false,
-        error: { code: ErrorCodes.NOT_ADMIN, message: '招待コード一覧の取得は管理者のみ可能です' },
-      });
-      return;
-    }
+    if (!requireAdmin(user, res)) return;
 
     const inviteCodes = await getFamilyInviteCodes(user.familyId);
-    res.json({ success: true, data: { inviteCodes } });
-  } catch (error) {
-    console.error('Get invites error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: '招待コード一覧の取得中にエラーが発生しました' },
-    });
-  }
-});
+    sendSuccess(res, { inviteCodes });
+  }, '招待コード一覧の取得中にエラーが発生しました')
+);
 
 // ============================================
 // Discord OAuth2 連携エンドポイント
@@ -275,35 +177,24 @@ function isDiscordConfigured(): boolean {
   return !!(DISCORD_CLIENT_ID && DISCORD_CLIENT_SECRET && DISCORD_REDIRECT_URI);
 }
 
-router.get('/discord', authenticateToken, async (req: Request, res: Response) => {
-  try {
+router.get(
+  '/discord',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
     if (!isDiscordConfigured()) {
-      res.status(503).json({
-        success: false,
-        error: { code: ErrorCodes.DISCORD_NOT_CONFIGURED, message: 'Discord連携が設定されていません' },
-      });
+      sendError(res, ErrorCodes.DISCORD_NOT_CONFIGURED, 'Discord連携が設定されていません', 503);
+      return;
+    }
+
+    const user = await requireUser(req, res);
+    if (!user) return;
+
+    if (user.discordId) {
+      sendError(res, ErrorCodes.DISCORD_ALREADY_LINKED, '既にDiscordと連携済みです', 400);
       return;
     }
 
     const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
-
-    if (user.discordId) {
-      res.status(400).json({
-        success: false,
-        error: { code: ErrorCodes.DISCORD_ALREADY_LINKED, message: '既にDiscordと連携済みです' },
-      });
-      return;
-    }
-
     const state = authUser.uid;
     const scope = 'identify';
     const authUrl = new URL('https://discord.com/api/oauth2/authorize');
@@ -313,51 +204,30 @@ router.get('/discord', authenticateToken, async (req: Request, res: Response) =>
     authUrl.searchParams.set('scope', scope);
     authUrl.searchParams.set('state', state);
 
-    res.json({ success: true, data: { authUrl: authUrl.toString() } });
-  } catch (error) {
-    console.error('Discord auth URL error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: 'Discord認証URLの生成中にエラーが発生しました' },
-    });
-  }
-});
+    sendSuccess(res, { authUrl: authUrl.toString() });
+  }, 'Discord認証URLの生成中にエラーが発生しました')
+);
 
-router.post('/discord/callback', authenticateToken, async (req: Request, res: Response) => {
-  try {
+router.post(
+  '/discord/callback',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
     if (!isDiscordConfigured()) {
-      res.status(503).json({
-        success: false,
-        error: { code: ErrorCodes.DISCORD_NOT_CONFIGURED, message: 'Discord連携が設定されていません' },
-      });
+      sendError(res, ErrorCodes.DISCORD_NOT_CONFIGURED, 'Discord連携が設定されていません', 503);
       return;
     }
 
     const parsed = discordCallbackSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        error: { code: ErrorCodes.VALIDATION_ERROR, message: '認可コードが必要です', details: parsed.error.errors },
-      });
+      sendError(res, ErrorCodes.VALIDATION_ERROR, '認可コードが必要です', 400, parsed.error.errors);
       return;
     }
 
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     if (user.discordId) {
-      res.status(400).json({
-        success: false,
-        error: { code: ErrorCodes.DISCORD_ALREADY_LINKED, message: '既にDiscordと連携済みです' },
-      });
+      sendError(res, ErrorCodes.DISCORD_ALREADY_LINKED, '既にDiscordと連携済みです', 400);
       return;
     }
 
@@ -365,9 +235,7 @@ router.post('/discord/callback', authenticateToken, async (req: Request, res: Re
 
     const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         client_id: DISCORD_CLIENT_ID!,
         client_secret: DISCORD_CLIENT_SECRET!,
@@ -380,28 +248,20 @@ router.post('/discord/callback', authenticateToken, async (req: Request, res: Re
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
       console.error('Discord token exchange failed:', errorText);
-      res.status(400).json({
-        success: false,
-        error: { code: ErrorCodes.DISCORD_OAUTH_FAILED, message: 'Discord認証に失敗しました' },
-      });
+      sendError(res, ErrorCodes.DISCORD_OAUTH_FAILED, 'Discord認証に失敗しました', 400);
       return;
     }
 
     const tokenData = (await tokenResponse.json()) as { access_token: string };
 
     const userResponse = await fetch('https://discord.com/api/users/@me', {
-      headers: {
-        Authorization: `Bearer ${tokenData.access_token}`,
-      },
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
 
     if (!userResponse.ok) {
       const errorText = await userResponse.text();
       console.error('Discord user fetch failed:', errorText);
-      res.status(400).json({
-        success: false,
-        error: { code: ErrorCodes.DISCORD_OAUTH_FAILED, message: 'Discordユーザー情報の取得に失敗しました' },
-      });
+      sendError(res, ErrorCodes.DISCORD_OAUTH_FAILED, 'Discordユーザー情報の取得に失敗しました', 400);
       return;
     }
 
@@ -409,98 +269,60 @@ router.post('/discord/callback', authenticateToken, async (req: Request, res: Re
 
     const existingUser = await getUserByDiscordId(discordUser.id);
     if (existingUser) {
-      res.status(400).json({
-        success: false,
-        error: { code: ErrorCodes.DISCORD_ALREADY_LINKED, message: 'このDiscordアカウントは既に他のユーザーと連携されています' },
-      });
+      sendError(res, ErrorCodes.DISCORD_ALREADY_LINKED, 'このDiscordアカウントは既に他のユーザーと連携されています', 400);
       return;
     }
 
+    const authUser = req.authUser!;
     await updateUserDiscordId(authUser.uid, discordUser.id);
 
-    res.json({
-      success: true,
-      data: {
-        discordId: discordUser.id,
-        discordUsername: discordUser.username,
-      },
-    });
-  } catch (error) {
-    console.error('Discord callback error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: 'Discord連携処理中にエラーが発生しました' },
-    });
-  }
-});
+    sendSuccess(res, { discordId: discordUser.id, discordUsername: discordUser.username });
+  }, 'Discord連携処理中にエラーが発生しました')
+);
 
-router.delete('/discord', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+router.delete(
+  '/discord',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     if (!user.discordId) {
-      res.status(400).json({
-        success: false,
-        error: { code: ErrorCodes.DISCORD_NOT_LINKED, message: 'Discordと連携されていません' },
-      });
+      sendError(res, ErrorCodes.DISCORD_NOT_LINKED, 'Discordと連携されていません', 400);
       return;
     }
 
+    const authUser = req.authUser!;
     await removeUserDiscordId(authUser.uid);
 
-    res.json({ success: true, data: { message: 'Discord連携を解除しました' } });
-  } catch (error) {
-    console.error('Discord unlink error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: 'Discord連携解除中にエラーが発生しました' },
-    });
-  }
-});
+    sendMessage(res, 'Discord連携を解除しました');
+  }, 'Discord連携解除中にエラーが発生しました')
+);
 
 // ============================================
 // Bot専用エンドポイント（API Key認証）
 // ============================================
 
-router.get('/discord/user/:discordId', authenticateBotApiKey, async (req: Request, res: Response) => {
-  try {
+router.get(
+  '/discord/user/:discordId',
+  authenticateBotApiKey,
+  asyncHandler(async (req: Request, res: Response) => {
     const { discordId } = req.params;
 
     if (!discordId) {
-      res.status(400).json({
-        success: false,
-        error: { code: ErrorCodes.VALIDATION_ERROR, message: 'Discord IDが必要です' },
-      });
+      sendError(res, ErrorCodes.VALIDATION_ERROR, 'Discord IDが必要です', 400);
       return;
     }
 
     const user = await getUserByDiscordId(discordId);
 
     if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
+      sendNotFound(res, 'ユーザー', ErrorCodes.USER_NOT_FOUND);
       return;
     }
 
-    res.json({ success: true, data: { user } });
-  } catch (error) {
-    console.error('Get user by Discord ID error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: 'ユーザー情報の取得中にエラーが発生しました' },
-    });
-  }
-});
+    sendSuccess(res, { user });
+  }, 'ユーザー情報の取得中にエラーが発生しました')
+);
 
 export default router;

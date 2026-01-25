@@ -1,7 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { authenticateToken } from '../middleware/auth.js';
-import { getUserByUid } from '../services/auth.service.js';
 import {
   getItems,
   createItem,
@@ -15,6 +14,9 @@ import {
   getItemWithRelatedTags,
 } from '../services/item.service.js';
 import { ErrorCodes, ItemStatus } from '@family-inventory/shared';
+import { asyncHandler } from '../utils/async-handler.js';
+import { requireUser } from '../utils/auth-helpers.js';
+import { sendSuccess, sendCreated, sendError, sendNotFound, sendValidationError } from '../utils/response.js';
 
 const router: Router = Router();
 
@@ -59,18 +61,12 @@ const batchVerifyItemsSchema = z.object({
   verifyAt: z.coerce.date().optional(),
 });
 
-router.get('/', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+router.get(
+  '/',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     const filter = {
       status: req.query.status as ItemStatus | undefined,
@@ -82,369 +78,206 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
     };
 
     const items = await getItems(user.familyId, filter);
-    res.json({ success: true, data: { items } });
-  } catch (error) {
-    console.error('Get items error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: '持ち物の取得中にエラーが発生しました' },
-    });
-  }
-});
+    sendSuccess(res, { items });
+  }, '持ち物の取得中にエラーが発生しました')
+);
 
-router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+router.get(
+  '/:id',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     // 関連タグを含むアイテム詳細を取得
     const itemDetail = await getItemWithRelatedTags(user.familyId, req.params.id);
     if (!itemDetail) {
-      res.status(404).json({
-        success: false,
-        error: { code: 'ITEM_NOT_FOUND', message: '持ち物が見つかりません' },
-      });
+      sendNotFound(res, '持ち物', 'ITEM_NOT_FOUND');
       return;
     }
 
-    res.json({ success: true, data: itemDetail });
-  } catch (error) {
-    console.error('Get item error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: '持ち物の取得中にエラーが発生しました' },
-    });
-  }
-});
+    sendSuccess(res, itemDetail);
+  }, '持ち物の取得中にエラーが発生しました')
+);
 
-router.post('/', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+router.post(
+  '/',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     const parsed = createItemSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: ErrorCodes.VALIDATION_ERROR,
-          message: '入力内容を確認してください',
-          details: parsed.error.errors,
-        },
-      });
+      sendValidationError(res, parsed.error.errors);
       return;
     }
 
     const item = await createItem(user.familyId, user.id, parsed.data);
-    res.status(201).json({ success: true, data: { item } });
-  } catch (error) {
-    console.error('Create item error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: '持ち物の作成中にエラーが発生しました' },
-    });
-  }
-});
+    sendCreated(res, { item });
+  }, '持ち物の作成中にエラーが発生しました')
+);
 
-router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+router.put(
+  '/:id',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     const parsed = updateItemSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: ErrorCodes.VALIDATION_ERROR,
-          message: '入力内容を確認してください',
-          details: parsed.error.errors,
-        },
-      });
+      sendValidationError(res, parsed.error.errors);
       return;
     }
 
     const item = await updateItem(user.familyId, req.params.id, parsed.data);
     if (!item) {
-      res.status(404).json({
-        success: false,
-        error: { code: 'ITEM_NOT_FOUND', message: '持ち物が見つかりません' },
-      });
+      sendNotFound(res, '持ち物', 'ITEM_NOT_FOUND');
       return;
     }
 
-    res.json({ success: true, data: { item } });
-  } catch (error) {
-    console.error('Update item error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: '持ち物の更新中にエラーが発生しました' },
-    });
-  }
-});
+    sendSuccess(res, { item });
+  }, '持ち物の更新中にエラーが発生しました')
+);
 
-router.post('/:id/consume', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+router.post(
+  '/:id/consume',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     const parsed = consumeItemSchema.safeParse(req.body);
     const input = parsed.success ? parsed.data : undefined;
 
-    const item = await consumeItem(user.familyId, req.params.id, input);
-    if (!item) {
-      res.status(404).json({
-        success: false,
-        error: { code: 'ITEM_NOT_FOUND', message: '持ち物が見つかりません' },
-      });
-      return;
+    try {
+      const item = await consumeItem(user.familyId, req.params.id, input);
+      if (!item) {
+        sendNotFound(res, '持ち物', 'ITEM_NOT_FOUND');
+        return;
+      }
+      sendSuccess(res, { item });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'INVALID_STATUS') {
+        sendError(res, 'INVALID_STATUS', '所有中の持ち物のみ消費できます', 400);
+        return;
+      }
+      throw error;
     }
+  }, '持ち物の消費処理中にエラーが発生しました')
+);
 
-    res.json({ success: true, data: { item } });
-  } catch (error) {
-    if (error instanceof Error && error.message === 'INVALID_STATUS') {
-      res.status(400).json({
-        success: false,
-        error: { code: 'INVALID_STATUS', message: '所有中の持ち物のみ消費できます' },
-      });
-      return;
-    }
-    console.error('Consume item error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: '持ち物の消費処理中にエラーが発生しました' },
-    });
-  }
-});
-
-router.post('/:id/give', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+router.post(
+  '/:id/give',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     const parsed = giveItemSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: ErrorCodes.VALIDATION_ERROR,
-          message: '譲渡先を入力してください',
-          details: parsed.error.errors,
-        },
-      });
+      sendError(res, ErrorCodes.VALIDATION_ERROR, '譲渡先を入力してください', 400, parsed.error.errors);
       return;
     }
 
-    const item = await giveItem(user.familyId, req.params.id, parsed.data);
-    if (!item) {
-      res.status(404).json({
-        success: false,
-        error: { code: 'ITEM_NOT_FOUND', message: '持ち物が見つかりません' },
-      });
-      return;
+    try {
+      const item = await giveItem(user.familyId, req.params.id, parsed.data);
+      if (!item) {
+        sendNotFound(res, '持ち物', 'ITEM_NOT_FOUND');
+        return;
+      }
+      sendSuccess(res, { item });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'INVALID_STATUS') {
+        sendError(res, 'INVALID_STATUS', '所有中の持ち物のみ譲渡できます', 400);
+        return;
+      }
+      throw error;
     }
+  }, '持ち物の譲渡処理中にエラーが発生しました')
+);
 
-    res.json({ success: true, data: { item } });
-  } catch (error) {
-    if (error instanceof Error && error.message === 'INVALID_STATUS') {
-      res.status(400).json({
-        success: false,
-        error: { code: 'INVALID_STATUS', message: '所有中の持ち物のみ譲渡できます' },
-      });
-      return;
-    }
-    console.error('Give item error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: '持ち物の譲渡処理中にエラーが発生しました' },
-    });
-  }
-});
-
-router.post('/:id/sell', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+router.post(
+  '/:id/sell',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     const parsed = sellItemSchema.safeParse(req.body);
     const input = parsed.success ? parsed.data : undefined;
 
-    const item = await sellItem(user.familyId, req.params.id, input);
-    if (!item) {
-      res.status(404).json({
-        success: false,
-        error: { code: 'ITEM_NOT_FOUND', message: '持ち物が見つかりません' },
-      });
-      return;
+    try {
+      const item = await sellItem(user.familyId, req.params.id, input);
+      if (!item) {
+        sendNotFound(res, '持ち物', 'ITEM_NOT_FOUND');
+        return;
+      }
+      sendSuccess(res, { item });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'INVALID_STATUS') {
+        sendError(res, 'INVALID_STATUS', '所有中の持ち物のみ売却できます', 400);
+        return;
+      }
+      throw error;
     }
+  }, '持ち物の売却処理中にエラーが発生しました')
+);
 
-    res.json({ success: true, data: { item } });
-  } catch (error) {
-    if (error instanceof Error && error.message === 'INVALID_STATUS') {
-      res.status(400).json({
-        success: false,
-        error: { code: 'INVALID_STATUS', message: '所有中の持ち物のみ売却できます' },
-      });
-      return;
-    }
-    console.error('Sell item error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: '持ち物の売却処理中にエラーが発生しました' },
-    });
-  }
-});
-
-router.post('/:id/verify', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+router.post(
+  '/:id/verify',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     const parsed = verifyItemSchema.safeParse(req.body);
     const verifyAt = parsed.success ? parsed.data.verifyAt : undefined;
 
     const item = await verifyItem(user.familyId, req.params.id, verifyAt);
     if (!item) {
-      res.status(404).json({
-        success: false,
-        error: { code: 'ITEM_NOT_FOUND', message: '持ち物が見つかりません' },
-      });
+      sendNotFound(res, '持ち物', 'ITEM_NOT_FOUND');
       return;
     }
 
-    res.json({ success: true, data: { item } });
-  } catch (error) {
-    console.error('Verify item error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: '持ち物の確認処理中にエラーが発生しました' },
-    });
-  }
-});
+    sendSuccess(res, { item });
+  }, '持ち物の確認処理中にエラーが発生しました')
+);
 
-router.post('/batch-verify', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+router.post(
+  '/batch-verify',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     const parsed = batchVerifyItemsSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: ErrorCodes.VALIDATION_ERROR,
-          message: 'アイテムIDの配列が必要です',
-          details: parsed.error.errors,
-        },
-      });
+      sendError(res, ErrorCodes.VALIDATION_ERROR, 'アイテムIDの配列が必要です', 400, parsed.error.errors);
       return;
     }
 
     const result = await batchVerifyItems(user.familyId, parsed.data.ids, parsed.data.verifyAt);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    console.error('Batch verify items error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: '持ち物の一括確認処理中にエラーが発生しました' },
-    });
-  }
-});
+    sendSuccess(res, result);
+  }, '持ち物の一括確認処理中にエラーが発生しました')
+);
 
-router.get('/:id/location', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.authUser!;
-    const user = await getUserByUid(authUser.uid);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: { code: ErrorCodes.USER_NOT_FOUND, message: 'ユーザーが見つかりません' },
-      });
-      return;
-    }
+router.get(
+  '/:id/location',
+  authenticateToken,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     const location = await getItemLocation(user.familyId, req.params.id);
     if (!location) {
-      res.status(404).json({
-        success: false,
-        error: { code: 'ITEM_NOT_FOUND', message: '持ち物が見つかりません' },
-      });
+      sendNotFound(res, '持ち物', 'ITEM_NOT_FOUND');
       return;
     }
 
-    res.json({ success: true, data: location });
-  } catch (error) {
-    console.error('Get item location error:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: ErrorCodes.INTERNAL_ERROR, message: '場所情報の取得中にエラーが発生しました' },
-    });
-  }
-});
+    sendSuccess(res, location);
+  }, '場所情報の取得中にエラーが発生しました')
+);
 
 export default router;
