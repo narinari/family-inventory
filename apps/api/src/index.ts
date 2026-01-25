@@ -7,7 +7,7 @@ import boxesRoutes from './routes/boxes.js';
 import locationsRoutes from './routes/locations.js';
 import tagsRoutes from './routes/tags.js';
 import wishlistRoutes from './routes/wishlist.js';
-import botRoutes from './routes/bot.js';
+import botRoutes from './routes/bot/index.js';
 
 const app: Express = express();
 const PORT = process.env.PORT || 8080;
