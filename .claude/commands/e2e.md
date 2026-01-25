@@ -5,24 +5,32 @@ description: e2e テストを実行 (project)
 
 # e2e テストを実行
 
-## 前提条件の確認
+## 1. Firebase Emulator の確認・起動
 
-1. Firebase Emulator が起動しているか確認
-   - `curl -s http://localhost:9099` (Auth Emulator)
-   - `curl -s http://localhost:8080` (Firestore Emulator)
+Firebase Emulator が起動しているか確認し、起動していなければ自動で起動する。
 
-2. 起動していない場合は起動を促す
-   ```
+```bash
+# Emulator の起動確認
+curl -s http://localhost:9099 > /dev/null 2>&1 && curl -s http://localhost:8080 > /dev/null 2>&1
+```
+
+**起動していない場合**:
+1. バックグラウンドで Emulator を起動（`run_in_background: true` を使用）
+   ```bash
    npx firebase emulators:start --project demo-family-inventory --only auth,firestore
    ```
+2. 起動完了を待つ（5秒待ってから再確認、最大3回）
+   ```bash
+   sleep 5 && curl -s http://localhost:9099 > /dev/null && curl -s http://localhost:8080 > /dev/null
+   ```
 
-## テスト実行
+## 2. テスト実行
 
 ```bash
 cd e2e && pnpm test
 ```
 
-## 結果の確認
+## 3. 結果の確認
 
 - 失敗したテストがあれば、スクリーンショットを確認: `e2e/test-results/`
 - レポートを表示: `cd e2e && pnpm test:report`
