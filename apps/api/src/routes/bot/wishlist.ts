@@ -1,5 +1,4 @@
 import { Router, type Request, type Response } from 'express';
-import { z } from 'zod';
 import type { WishlistStatus, Priority } from '@family-inventory/shared';
 import { requireDiscordUser, requireDiscordUserFromQuery } from './helpers.js';
 import { asyncHandler } from '../../utils/async-handler.js';
@@ -18,25 +17,9 @@ import {
   cancelWishlistItem,
   searchWishlistItems,
 } from '../../services/wishlist.service.js';
+import { botCreateWishlistSchema, statusActionSchema } from '../../schemas/index.js';
 
 const router: Router = Router();
-
-// ============================================
-// Zod Schemas
-// ============================================
-
-const createWishlistSchema = z.object({
-  discordId: z.string().min(1),
-  name: z.string().min(1).max(200).trim(),
-  priority: z.enum(['high', 'medium', 'low']).optional(),
-  priceRange: z.string().max(100).optional(),
-  url: z.string().url().max(500).optional(),
-  memo: z.string().max(1000).optional(),
-});
-
-const statusActionSchema = z.object({
-  discordId: z.string().min(1),
-});
 
 // ============================================
 // Wishlist API
@@ -94,7 +77,7 @@ router.get(
 router.post(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    const parsed = createWishlistSchema.safeParse(req.body);
+    const parsed = botCreateWishlistSchema.safeParse(req.body);
     if (!parsed.success) {
       sendValidationError(res, parsed.error.errors);
       return;

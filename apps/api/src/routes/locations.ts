@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { z } from 'zod';
 import { authenticateToken } from '../middleware/auth.js';
 import {
   getLocations,
@@ -20,22 +19,9 @@ import {
   asyncHandler,
   requireUser,
 } from '../utils/index.js';
+import { createLocationSchema, updateLocationSchema } from '../schemas/index.js';
 
 const router: Router = Router();
-
-const createLocationSchema = z.object({
-  name: z.string().min(1).max(100).trim(),
-  address: z.string().max(200).trim().optional(),
-  description: z.string().max(500).trim().optional(),
-  tags: z.array(z.string()).optional(),
-});
-
-const updateLocationSchema = z.object({
-  name: z.string().min(1).max(100).trim().optional(),
-  address: z.string().max(200).trim().optional(),
-  description: z.string().max(500).trim().optional(),
-  tags: z.array(z.string()).optional(),
-});
 
 // GET / - 保管場所一覧取得
 router.get(

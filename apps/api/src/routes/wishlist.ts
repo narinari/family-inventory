@@ -1,5 +1,4 @@
 import { Router, type Request, type Response } from 'express';
-import { z } from 'zod';
 import { authenticateToken } from '../middleware/auth.js';
 import {
   getWishlistItems,
@@ -13,32 +12,9 @@ import { WishlistStatus, Priority } from '@family-inventory/shared';
 import { asyncHandler } from '../utils/async-handler.js';
 import { requireUser } from '../utils/auth-helpers.js';
 import { sendSuccess, sendCreated, sendError, sendNotFound, sendValidationError } from '../utils/response.js';
+import { createWishlistSchema, updateWishlistSchema } from '../schemas/index.js';
 
 const router: Router = Router();
-
-const createWishlistSchema = z.object({
-  name: z.string().min(1).max(200).trim(),
-  itemTypeId: z.string().optional(),
-  requesterId: z.string().optional(),
-  priority: z.enum(['high', 'medium', 'low']).optional(),
-  priceRange: z.string().max(100).optional(),
-  deadline: z.coerce.date().optional(),
-  url: z.string().url().max(500).optional(),
-  tags: z.array(z.string()).optional(),
-  memo: z.string().max(1000).optional(),
-});
-
-const updateWishlistSchema = z.object({
-  name: z.string().min(1).max(200).trim().optional(),
-  itemTypeId: z.string().optional(),
-  requesterId: z.string().optional(),
-  priority: z.enum(['high', 'medium', 'low']).optional(),
-  priceRange: z.string().max(100).optional(),
-  deadline: z.coerce.date().optional(),
-  url: z.string().url().max(500).optional(),
-  tags: z.array(z.string()).optional(),
-  memo: z.string().max(1000).optional(),
-});
 
 router.get(
   '/',
