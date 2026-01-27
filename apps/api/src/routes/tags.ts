@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { z } from 'zod';
 import { authenticateToken } from '../middleware/auth.js';
 import { getTags, createTag, updateTag, deleteTag } from '../services/tag.service.js';
 import {
@@ -11,18 +10,9 @@ import {
   asyncHandler,
   requireUser,
 } from '../utils/index.js';
+import { createTagSchema, updateTagSchema } from '../schemas/index.js';
 
 const router: Router = Router();
-
-const createTagSchema = z.object({
-  name: z.string().min(1).max(50).trim(),
-  color: z.string().max(20).trim().optional(),
-});
-
-const updateTagSchema = z.object({
-  name: z.string().min(1).max(50).trim().optional(),
-  color: z.string().max(20).trim().optional(),
-});
 
 // GET / - タグ一覧取得
 router.get(

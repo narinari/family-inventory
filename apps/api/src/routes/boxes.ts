@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { z } from 'zod';
 import { authenticateToken } from '../middleware/auth.js';
 import {
   getBoxes,
@@ -20,22 +19,9 @@ import {
   asyncHandler,
   requireUser,
 } from '../utils/index.js';
+import { createBoxSchema, updateBoxSchema } from '../schemas/index.js';
 
 const router: Router = Router();
-
-const createBoxSchema = z.object({
-  name: z.string().min(1).max(100).trim(),
-  locationId: z.string().optional(),
-  description: z.string().max(500).trim().optional(),
-  tags: z.array(z.string()).optional(),
-});
-
-const updateBoxSchema = z.object({
-  name: z.string().min(1).max(100).trim().optional(),
-  locationId: z.string().optional(),
-  description: z.string().max(500).trim().optional(),
-  tags: z.array(z.string()).optional(),
-});
 
 // GET / - 箱一覧取得
 router.get(

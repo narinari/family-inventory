@@ -1381,20 +1381,25 @@ code-simplifier エージェントを使用してAPIコードベースを段階�
 
 **優先度**: 低
 **依存**: TASK-R01〜R07
-**ステータス**: 未着手
+**ステータス**: 完了
 
 #### 概要
 各ルートに散在するZodスキーマを整理する。
 
 #### 詳細タスク
-- [ ] `apps/api/src/schemas/` ディレクトリ作成
-- [ ] 各ルートからZodスキーマを移動
-  - `schemas/item.schema.ts`
-  - `schemas/wishlist.schema.ts`
-  - `schemas/auth.schema.ts`
-  - etc.
-- [ ] スキーマの再利用性向上
-- [ ] 全テストが通ることを確認
+- [x] `apps/api/src/schemas/` ディレクトリ作成
+- [x] 各ルートからZodスキーマを移動
+  - `schemas/index.ts` - 一括エクスポート
+  - `schemas/common.schema.ts` - 共通スキーマ
+  - `schemas/auth.schema.ts` - 認証関連
+  - `schemas/item.schema.ts` - アイテム関連（標準API + Bot）
+  - `schemas/wishlist.schema.ts` - 購入予定関連（標準API + Bot）
+  - `schemas/box.schema.ts` - 箱関連
+  - `schemas/location.schema.ts` - 保管場所関連
+  - `schemas/tag.schema.ts` - タグ関連
+  - `schemas/item-type.schema.ts` - アイテム種別関連
+- [x] スキーマの再利用性向上（Bot用は `bot` プレフィックス付きで命名）
+- [x] 全テストが通ることを確認（83テスト全通過）
 
 ---
 
@@ -1448,3 +1453,4 @@ TASK-R01 (共通基盤)
 | v1.11 | 2026-01-11 | Phase 7 追加（コードリファクタリング TASK-R01〜R08） |
 | v1.12 | 2026-01-24 | TASK-605〜608 追加（アイテム種別削除権限、テンプレート作成、種別詳細画面、マークダウン対応） |
 | v1.13 | 2026-01-25 | TASK-R07 完了（Bot統合リファクタリング - 784行→636行合計、7ファイルに分割） |
+| v1.14 | 2026-01-27 | TASK-R08 完了（スキーマ整理 - 25スキーマを9ファイルに分離、Phase 7完了） |

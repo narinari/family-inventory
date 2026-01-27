@@ -1,5 +1,4 @@
 import { Router, type Request, type Response } from 'express';
-import { z } from 'zod';
 import { authenticateToken } from '../middleware/auth.js';
 import {
   getItems,
@@ -17,49 +16,17 @@ import { ErrorCodes, ItemStatus } from '@family-inventory/shared';
 import { asyncHandler } from '../utils/async-handler.js';
 import { requireUser } from '../utils/auth-helpers.js';
 import { sendSuccess, sendCreated, sendError, sendNotFound, sendValidationError } from '../utils/response.js';
+import {
+  createItemSchema,
+  updateItemSchema,
+  consumeItemSchema,
+  giveItemSchema,
+  sellItemSchema,
+  verifyItemSchema,
+  batchVerifyItemsSchema,
+} from '../schemas/index.js';
 
 const router: Router = Router();
-
-const createItemSchema = z.object({
-  itemTypeId: z.string().min(1),
-  ownerId: z.string().optional(),
-  boxId: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  memo: z.string().max(1000).optional(),
-  purchasedAt: z.coerce.date().optional(),
-});
-
-const updateItemSchema = z.object({
-  ownerId: z.string().optional(),
-  boxId: z.string().nullable().optional(),
-  tags: z.array(z.string()).optional(),
-  memo: z.string().max(1000).optional(),
-  purchasedAt: z.coerce.date().optional(),
-});
-
-const consumeItemSchema = z.object({
-  consumedAt: z.coerce.date().optional(),
-});
-
-const giveItemSchema = z.object({
-  givenTo: z.string().min(1),
-  givenAt: z.coerce.date().optional(),
-});
-
-const sellItemSchema = z.object({
-  soldTo: z.string().optional(),
-  soldPrice: z.number().min(0).optional(),
-  soldAt: z.coerce.date().optional(),
-});
-
-const verifyItemSchema = z.object({
-  verifyAt: z.coerce.date().optional(),
-});
-
-const batchVerifyItemsSchema = z.object({
-  ids: z.array(z.string().min(1)).min(1),
-  verifyAt: z.coerce.date().optional(),
-});
 
 router.get(
   '/',

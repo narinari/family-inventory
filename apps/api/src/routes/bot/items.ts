@@ -1,5 +1,4 @@
 import { Router, type Request, type Response } from 'express';
-import { z } from 'zod';
 import type { ItemStatus } from '@family-inventory/shared';
 import { requireDiscordUser, requireDiscordUserFromQuery } from './helpers.js';
 import { asyncHandler } from '../../utils/async-handler.js';
@@ -23,39 +22,14 @@ import {
   getItemTypeById,
   createItemType,
 } from '../../services/item-type.service.js';
+import {
+  botCreateItemSchema,
+  statusActionSchema,
+  botGiveItemSchema,
+  botSellItemSchema,
+} from '../../schemas/index.js';
 
 const router: Router = Router();
-
-// ============================================
-// Zod Schemas
-// ============================================
-
-const createItemSchema = z
-  .object({
-    discordId: z.string().min(1),
-    itemTypeId: z.string().min(1).optional(),
-    itemTypeName: z.string().min(1).optional(),
-    boxId: z.string().optional(),
-    memo: z.string().max(1000).optional(),
-  })
-  .refine((data) => data.itemTypeId || data.itemTypeName, {
-    message: 'itemTypeId または itemTypeName が必要です',
-  });
-
-const statusActionSchema = z.object({
-  discordId: z.string().min(1),
-});
-
-const giveActionSchema = z.object({
-  discordId: z.string().min(1),
-  givenTo: z.string().min(1),
-});
-
-const sellActionSchema = z.object({
-  discordId: z.string().min(1),
-  soldTo: z.string().optional(),
-  soldPrice: z.number().min(0).optional(),
-});
 
 // ============================================
 // Items API
@@ -103,7 +77,7 @@ router.get(
 router.post(
   '/items',
   asyncHandler(async (req: Request, res: Response) => {
-    const parsed = createItemSchema.safeParse(req.body);
+    const parsed = botCreateItemSchema.safeParse(req.body);
     if (!parsed.success) {
       sendValidationError(res, parsed.error.errors);
       return;
@@ -174,7 +148,7 @@ router.post(
 router.post(
   '/items/:id/give',
   asyncHandler(async (req: Request, res: Response) => {
-    const parsed = giveActionSchema.safeParse(req.body);
+    const parsed = botGiveItemSchema.safeParse(req.body);
     if (!parsed.success) {
       sendValidationError(res, parsed.error.errors);
       return;
@@ -206,7 +180,7 @@ router.post(
 router.post(
   '/items/:id/sell',
   asyncHandler(async (req: Request, res: Response) => {
-    const parsed = sellActionSchema.safeParse(req.body);
+    const parsed = botSellItemSchema.safeParse(req.body);
     if (!parsed.success) {
       sendValidationError(res, parsed.error.errors);
       return;

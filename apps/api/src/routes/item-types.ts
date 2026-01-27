@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { z } from 'zod';
 import { authenticateToken } from '../middleware/auth.js';
 import {
   getItemTypes,
@@ -19,22 +18,9 @@ import {
   asyncHandler,
   requireUser,
 } from '../utils/index.js';
+import { createItemTypeSchema, updateItemTypeSchema } from '../schemas/index.js';
 
 const router: Router = Router();
-
-const createItemTypeSchema = z.object({
-  name: z.string().min(1).max(100).trim(),
-  manufacturer: z.string().max(100).trim().optional(),
-  description: z.string().max(500).trim().optional(),
-  tags: z.array(z.string()).optional(),
-});
-
-const updateItemTypeSchema = z.object({
-  name: z.string().min(1).max(100).trim().optional(),
-  manufacturer: z.string().max(100).trim().optional(),
-  description: z.string().max(500).trim().optional(),
-  tags: z.array(z.string()).optional(),
-});
 
 // GET / - アイテム種別一覧取得
 router.get(

@@ -1,5 +1,4 @@
 import { Router, type Request, type Response } from 'express';
-import { z } from 'zod';
 import { authenticateToken, authenticateBotApiKey } from '../middleware/auth.js';
 import {
   getUserByUid,
@@ -18,25 +17,14 @@ import { ErrorCodes } from '@family-inventory/shared';
 import { asyncHandler } from '../utils/async-handler.js';
 import { requireUser, requireAdmin } from '../utils/auth-helpers.js';
 import { sendSuccess, sendError, sendNotFound, sendValidationError, sendMessage } from '../utils/response.js';
+import {
+  joinSchema,
+  createInviteSchema,
+  updateProfileSchema,
+  discordCallbackSchema,
+} from '../schemas/index.js';
 
 const router: Router = Router();
-
-const joinSchema = z.object({
-  inviteCode: z.string().min(1),
-});
-
-const createInviteSchema = z.object({
-  expiresInDays: z.number().min(1).max(30).optional(),
-});
-
-const updateProfileSchema = z
-  .object({
-    displayName: z.string().min(1).max(50).trim().optional(),
-    photoURL: z.string().url().nullable().optional(),
-  })
-  .refine((data) => data.displayName !== undefined || data.photoURL !== undefined, {
-    message: '更新するフィールドが必要です',
-  });
 
 router.post(
   '/login',
@@ -168,10 +156,6 @@ router.get(
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI;
-
-const discordCallbackSchema = z.object({
-  code: z.string().min(1),
-});
 
 function isDiscordConfigured(): boolean {
   return !!(DISCORD_CLIENT_ID && DISCORD_CLIENT_SECRET && DISCORD_REDIRECT_URI);
