@@ -7,6 +7,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
 import { getBoxItems, getItemTypes, getLocations } from '@/lib/api';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import { QrCodeDisplay } from '@/components/qr/QrCodeDisplay';
+import { BoxQrLabel } from '@/components/qr/BoxQrLabel';
+import { getBoxQrUrl } from '@/lib/qr-utils';
 import type { Box, Item, ItemType, Location } from '@family-inventory/shared';
 
 export default function BoxDetailClient() {
@@ -20,6 +23,7 @@ export default function BoxDetailClient() {
   const [itemTypes, setItemTypes] = useState<ItemType[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [showLabel, setShowLabel] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -94,6 +98,18 @@ export default function BoxDetailClient() {
               <MarkdownRenderer content={box.description} />
             </div>
           )}
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-4">
+            <QrCodeDisplay value={getBoxQrUrl(box.id)} size={80} />
+            <div>
+              <p className="text-sm text-gray-500">この箱のQRコード</p>
+              <button
+                onClick={() => setShowLabel(true)}
+                className="mt-1 text-sm text-primary-600 hover:text-primary-700"
+              >
+                ラベルを印刷
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-6">
@@ -126,6 +142,14 @@ export default function BoxDetailClient() {
           )}
         </div>
       </main>
+
+      {showLabel && (
+        <BoxQrLabel
+          box={box}
+          locationName={location?.name}
+          onClose={() => setShowLabel(false)}
+        />
+      )}
     </div>
   );
 }

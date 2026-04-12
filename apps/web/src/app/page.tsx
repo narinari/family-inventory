@@ -98,8 +98,8 @@ export default function HomePage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <QuickActionCard icon="📦" label="持ち物を登録" href="/items/new" />
           <QuickActionCard icon="🔍" label="持ち物を探す" href="/items" />
+          <QuickActionCard icon="📷" label="QRスキャン" href="/scan" />
           <QuickActionCard icon="📝" label="欲しい物リスト" href="/wishlist" />
-          <QuickActionCard icon="⚙️" label="設定" href="/settings" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

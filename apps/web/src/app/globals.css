@@ -19,6 +19,25 @@ body {
   min-height: 100vh;
 }
 
+@media print {
+  body {
+    background: white !important;
+  }
+
+  .print\:hidden,
+  header,
+  nav,
+  main {
+    display: none !important;
+  }
+
+  .qr-label {
+    display: flex !important;
+    width: 62mm;
+    padding: 4mm;
+  }
+}
+
 @layer utilities {
   .animate-fade-in {
     animation: fadeIn 0.3s ease-out;

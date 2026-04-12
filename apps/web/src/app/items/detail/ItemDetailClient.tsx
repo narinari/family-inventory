@@ -3,11 +3,18 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
 import { getItem, getItems, getBoxes, getMembers, updateItem } from '@/lib/api';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import { parseBoxIdFromUrl } from '@/lib/qr-utils';
 import type { Box, User, ItemWithRelatedTags, TagSource } from '@family-inventory/shared';
+
+const QrScanner = dynamic(
+  () => import('@/components/qr/QrScanner').then((mod) => ({ default: mod.QrScanner })),
+  { ssr: false },
+);
 
 export default function ItemDetailClient() {
   const { user, loading } = useAuth();
@@ -23,6 +30,8 @@ export default function ItemDetailClient() {
   const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<'found' | 'wrong' | null>(null);
 
   const [formData, setFormData] = useState({
     ownerId: '',
@@ -281,19 +290,29 @@ export default function ItemDetailClient() {
                 <dt className="text-sm font-medium text-gray-500">保管場所</dt>
                 <dd className="mt-1 text-gray-900">
                   {box ? (
-                    <>
-                      <Link href={`/boxes/detail?id=${box.id}`} className="text-primary-600 hover:text-primary-700">
-                        {box.name}
-                      </Link>
-                      {location && (
-                        <Link
-                          href={`/locations/detail?id=${location.id}`}
-                          className="text-gray-500 hover:text-primary-600 ml-2"
-                        >
-                          ({location.name})
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <Link href={`/boxes/detail?id=${box.id}`} className="text-primary-600 hover:text-primary-700">
+                          {box.name}
                         </Link>
+                        {location && (
+                          <Link
+                            href={`/locations/detail?id=${location.id}`}
+                            className="text-gray-500 hover:text-primary-600 ml-2"
+                          >
+                            ({location.name})
+                          </Link>
+                        )}
+                      </div>
+                      {item.status === 'owned' && (
+                        <button
+                          onClick={() => { setScanResult(null); setScanning(true); }}
+                          className="text-sm px-3 py-1 bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 whitespace-nowrap"
+                        >
+                          この箱を探す
+                        </button>
                       )}
-                    </>
+                    </div>
                   ) : (
                     '未設定'
                   )}
@@ -377,6 +396,38 @@ export default function ItemDetailClient() {
           )}
         </div>
       </main>
+
+      <QrScanner
+        active={scanning}
+        onScan={(decodedText) => {
+          const scannedBoxId = parseBoxIdFromUrl(decodedText);
+          if (scannedBoxId === item.boxId) {
+            setScanResult('found');
+            setTimeout(() => { setScanning(false); setScanResult(null); }, 2500);
+          } else {
+            setScanResult('wrong');
+            setTimeout(() => setScanResult(null), 2000);
+          }
+        }}
+        onClose={() => { setScanning(false); setScanResult(null); }}
+      />
+
+      {scanning && scanResult && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none">
+          {scanResult === 'found' ? (
+            <div className="bg-green-600 text-white px-8 py-6 rounded-2xl text-center shadow-lg">
+              <p className="text-4xl mb-2">&#10003;</p>
+              <p className="text-xl font-bold">{box?.name}</p>
+              <p className="mt-1">この箱です!</p>
+            </div>
+          ) : (
+            <div className="bg-yellow-600 text-white px-8 py-4 rounded-2xl text-center shadow-lg">
+              <p className="font-bold">違う箱です</p>
+              <p className="text-sm mt-1">スキャンを続けてください</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
