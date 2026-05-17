@@ -86,51 +86,6 @@ export async function optionalAuth(
   next();
 }
 
-const BOT_API_KEY = process.env.BOT_API_KEY;
-
-export function authenticateBotApiKey(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
-  if (!BOT_API_KEY) {
-    res.status(503).json({
-      success: false,
-      error: {
-        code: ErrorCodes.BOT_API_NOT_CONFIGURED,
-        message: 'Bot APIが設定されていません',
-      },
-    });
-    return;
-  }
-
-  const apiKey = req.headers['x-api-key'];
-
-  if (!apiKey) {
-    res.status(401).json({
-      success: false,
-      error: {
-        code: ErrorCodes.UNAUTHORIZED,
-        message: 'API Keyが必要です',
-      },
-    });
-    return;
-  }
-
-  if (apiKey !== BOT_API_KEY) {
-    res.status(401).json({
-      success: false,
-      error: {
-        code: ErrorCodes.INVALID_API_KEY,
-        message: '無効なAPI Keyです',
-      },
-    });
-    return;
-  }
-
-  next();
-}
-
 const AGENT_API_KEY = process.env.AGENT_API_KEY;
 
 export function authenticateAgent(

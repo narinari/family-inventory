@@ -11,7 +11,6 @@ export {
   joinSchema,
   createInviteSchema,
   updateProfileSchema,
-  discordCallbackSchema,
 } from './auth.schema.js';
 
 // アイテム（持ち物）関連

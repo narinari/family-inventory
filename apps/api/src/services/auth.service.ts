@@ -177,35 +177,6 @@ export async function getFamilyInviteCodes(familyId: string): Promise<InviteCode
   });
 }
 
-export async function updateUserDiscordId(uid: string, discordId: string): Promise<void> {
-  await usersCollection.doc(uid).update({
-    discordId,
-    updatedAt: FieldValue.serverTimestamp(),
-  });
-}
-
-export async function removeUserDiscordId(uid: string): Promise<void> {
-  await usersCollection.doc(uid).update({
-    discordId: FieldValue.delete(),
-    updatedAt: FieldValue.serverTimestamp(),
-  });
-}
-
-export async function getUserByDiscordId(discordId: string): Promise<User | null> {
-  const snapshot = await usersCollection.where('discordId', '==', discordId).limit(1).get();
-
-  if (snapshot.empty) return null;
-
-  const doc = snapshot.docs[0];
-  const data = doc.data();
-  return {
-    id: doc.id,
-    ...data,
-    createdAt: (data.createdAt as Timestamp).toDate(),
-    updatedAt: (data.updatedAt as Timestamp).toDate(),
-  } as User;
-}
-
 export async function updateUserProfile(
   uid: string,
   updates: { displayName?: string; photoURL?: string | null }

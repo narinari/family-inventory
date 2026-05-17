@@ -11,10 +11,6 @@ vi.mock('@/components/layout/Header', () => ({
   Header: () => <header data-testid="header">Header</header>,
 }));
 
-vi.mock('@/components/settings/DiscordLinkButton', () => ({
-  DiscordLinkButton: () => <button>Discord Link</button>,
-}));
-
 import { useAuth } from '@/contexts/AuthContext';
 
 describe('SettingsPage', () => {
@@ -31,7 +27,6 @@ describe('SettingsPage', () => {
     expect(screen.getByText('設定')).toBeInTheDocument();
     expect(screen.getByText('プロフィール')).toBeInTheDocument();
     expect(screen.getByText('メンバー管理')).toBeInTheDocument();
-    expect(screen.getByText('Discord 連携')).toBeInTheDocument();
     expect(screen.getByText('マスターデータ管理')).toBeInTheDocument();
     expect(screen.getByText('アカウント情報')).toBeInTheDocument();
   });

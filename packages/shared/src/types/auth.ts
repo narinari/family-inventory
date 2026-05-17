@@ -10,6 +10,10 @@ export interface User {
   displayName: string;
   photoURL?: string;
   role: UserRole;
+  /**
+   * @deprecated Discord bot は削除済み。将来 Discord 通知などに利用する可能性があるためフィールド自体は温存している。
+   * 現状この値を書き込む経路は存在しない。
+   */
   discordId?: string;
   familyId: string;
   createdAt: Date;
@@ -26,7 +30,6 @@ export interface CreateUserInput {
 export interface UpdateUserInput {
   displayName?: string;
   photoURL?: string;
-  discordId?: string;
 }
 
 // ============================================
@@ -87,10 +90,6 @@ export interface LoginResponse {
   needsInviteCode: boolean;
 }
 
-export interface DiscordLinkRequest {
-  discordAccessToken: string;
-}
-
 // ============================================
 // エージェント認証関連の型定義
 // ============================================
@@ -137,11 +136,6 @@ export const ErrorCodes = {
   NOT_ADMIN: 'NOT_ADMIN',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   VALIDATION_ERROR: 'VALIDATION_ERROR',
-  BOT_API_NOT_CONFIGURED: 'BOT_API_NOT_CONFIGURED',
-  DISCORD_NOT_CONFIGURED: 'DISCORD_NOT_CONFIGURED',
-  DISCORD_OAUTH_FAILED: 'DISCORD_OAUTH_FAILED',
-  DISCORD_ALREADY_LINKED: 'DISCORD_ALREADY_LINKED',
-  DISCORD_NOT_LINKED: 'DISCORD_NOT_LINKED',
   AGENT_API_NOT_CONFIGURED: 'AGENT_API_NOT_CONFIGURED',
   MISSING_AGENT_ACTOR: 'MISSING_AGENT_ACTOR',
   AGENT_ACTOR_NOT_MAPPED: 'AGENT_ACTOR_NOT_MAPPED',
