@@ -17,8 +17,7 @@
 family-inventory/
 ├── apps/
 │   ├── web/          # Next.js フロントエンド
-│   ├── api/          # Express バックエンドAPI
-│   └── discord-bot/  # Discord Bot（予定）
+│   └── api/          # Express バックエンドAPI（Web 用 + /agent エンドポイント）
 ├── packages/
 │   └── shared/       # 共通の型定義・ユーティリティ
 ├── package.json
@@ -81,6 +80,41 @@ pnpm dev:api
 | GET | /auth/members | 家族メンバー一覧 |
 | POST | /auth/invite | 招待コード発行 |
 | GET | /auth/invites | 招待コード一覧 |
+
+## エージェント連携 (Hermes 等)
+
+Discord Bot は廃止し、Hermes Agent などの外部 LLM エージェントから REST 経由で操作できるよう、`/agent/*` エンドポイント群を提供しています。
+
+### 認証方式
+
+| ヘッダ | 説明 |
+|--------|------|
+| `X-API-Key` | Cloud Run の `AGENT_API_KEY` と一致する API キー |
+| `X-Agent-Actor` | Actor ID。Firestore の `agentMappings` コレクションで `familyId` / `userId` に解決される |
+
+`familyId` / `userId` の紐付けは `agentMappings` ドキュメントとして管理し、`apps/api/src/scripts/seed-agent-mapping.ts` で投入します（詳細はデプロイ手順書を参照）。
+
+### OpenAPI 仕様
+
+`/agent/*` の API 仕様は `apps/api/openapi.yaml` に集約されています。再生成は以下のコマンドで実行します。
+
+```bash
+pnpm --filter api openapi:generate
+```
+
+Hermes Agent 側 plugin はこの YAML を取り込んで動的に tool を登録します（後述）。
+
+### 本番反映手順
+
+Cloud Run / Secret Manager / Firestore への反映手順は次のドキュメントにまとめています。
+
+- [`docs/AGENT_DEPLOYMENT.md`](docs/AGENT_DEPLOYMENT.md) — `AGENT_API_KEY` 生成・Secret Manager 設定・`agentMappings` seed・smoke test まで
+
+### Hermes Agent plugin
+
+khali ホスト上の Hermes Agent からこの API を呼び出すための plugin 実装と、agenix secret / NixOS module の組み込み手順は nix-config 側にあります。
+
+- `nix-config/pkgs/hermes-family-inventory-plugin/README.md`
 
 ## CI/CD (GitHub Actions)
 
