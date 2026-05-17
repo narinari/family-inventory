@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticateBotApiKey } from '../../middleware/auth.js';
+import { authenticateAgent } from '../../middleware/auth.js';
 import itemsRouter from './items.js';
 import wishlistRouter from './wishlist.js';
 import boxesRouter from './boxes.js';
@@ -8,8 +8,8 @@ import searchRouter from './search.js';
 
 const router: Router = Router();
 
-// Bot API Key認証をすべてのルートに適用
-router.use(authenticateBotApiKey);
+// エージェント認証 (API Key + X-Agent-Actor) をすべてのルートに適用
+router.use(authenticateAgent);
 
 // ルーターをマウント
 router.use(itemsRouter);

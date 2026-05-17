@@ -5,7 +5,8 @@ import { z } from 'zod';
  * Bot API で共通して使用されるスキーマ
  */
 
-// Bot操作で使用する discordId のみを持つスキーマ
+// Agent操作で使用する空ボディ用スキーマ
+// 注: discordId は移行期間のため optional として残す (TASK-4 で削除予定)
 export const statusActionSchema = z.object({
-  discordId: z.string().min(1),
+  discordId: z.string().optional(),
 });

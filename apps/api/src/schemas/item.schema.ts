@@ -46,10 +46,10 @@ export const batchVerifyItemsSchema = z.object({
   verifyAt: z.coerce.date().optional(),
 });
 
-// Bot API用スキーマ
+// Agent API用スキーマ (discordId は TASK-4 で削除予定。移行期間のため optional)
 export const botCreateItemSchema = z
   .object({
-    discordId: z.string().min(1),
+    discordId: z.string().optional(),
     itemTypeId: z.string().min(1).optional(),
     itemTypeName: z.string().min(1).optional(),
     boxId: z.string().optional(),
@@ -60,12 +60,12 @@ export const botCreateItemSchema = z
   });
 
 export const botGiveItemSchema = z.object({
-  discordId: z.string().min(1),
+  discordId: z.string().optional(),
   givenTo: z.string().min(1),
 });
 
 export const botSellItemSchema = z.object({
-  discordId: z.string().min(1),
+  discordId: z.string().optional(),
   soldTo: z.string().optional(),
   soldPrice: z.number().min(0).optional(),
 });

@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import type { WishlistStatus, Priority } from '@family-inventory/shared';
-import { requireDiscordUser, requireDiscordUserFromQuery } from './helpers.js';
+import { requireAgentUser } from './helpers.js';
 import { asyncHandler } from '../../utils/async-handler.js';
 import {
   sendSuccess,
@@ -28,15 +28,15 @@ const router: Router = Router();
 router.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    const user = await requireDiscordUserFromQuery(req, res);
-    if (!user) return;
+    const actor = await requireAgentUser(req, res);
+    if (!actor) return;
 
     const filter = {
       status: req.query.status as WishlistStatus | undefined,
       priority: req.query.priority as Priority | undefined,
     };
 
-    const wishlist = await getWishlistItems(user.familyId, filter);
+    const wishlist = await getWishlistItems(actor.familyId, filter);
     sendSuccess(res, { wishlist });
   }, '購入予定の取得中にエラーが発生しました')
 );
@@ -50,10 +50,10 @@ router.get(
       return;
     }
 
-    const user = await requireDiscordUserFromQuery(req, res);
-    if (!user) return;
+    const actor = await requireAgentUser(req, res);
+    if (!actor) return;
 
-    const wishlist = await searchWishlistItems(user.familyId, query, 'pending');
+    const wishlist = await searchWishlistItems(actor.familyId, query, 'pending');
     sendSuccess(res, { wishlist });
   }, '購入予定の検索中にエラーが発生しました')
 );
@@ -61,10 +61,10 @@ router.get(
 router.get(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {
-    const user = await requireDiscordUserFromQuery(req, res);
-    if (!user) return;
+    const actor = await requireAgentUser(req, res);
+    if (!actor) return;
 
-    const wishlistItem = await getWishlistById(user.familyId, req.params.id);
+    const wishlistItem = await getWishlistById(actor.familyId, req.params.id);
     if (!wishlistItem) {
       sendNotFound(res, '購入予定', 'WISHLIST_NOT_FOUND');
       return;
@@ -83,12 +83,13 @@ router.post(
       return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { discordId, ...input } = parsed.data;
 
-    const user = await requireDiscordUser(discordId, res);
-    if (!user) return;
+    const actor = await requireAgentUser(req, res);
+    if (!actor) return;
 
-    const wishlistItem = await createWishlistItem(user.familyId, user.id, input);
+    const wishlistItem = await createWishlistItem(actor.familyId, actor.userId, input);
     sendCreated(res, { wishlist: wishlistItem });
   }, '購入予定の作成中にエラーが発生しました')
 );
@@ -102,11 +103,11 @@ router.post(
       return;
     }
 
-    const user = await requireDiscordUser(parsed.data.discordId, res);
-    if (!user) return;
+    const actor = await requireAgentUser(req, res);
+    if (!actor) return;
 
     try {
-      const result = await purchaseWishlistItem(user.familyId, req.params.id);
+      const result = await purchaseWishlistItem(actor.familyId, req.params.id);
       if (!result) {
         sendNotFound(res, '購入予定', 'WISHLIST_NOT_FOUND');
         return;
@@ -131,11 +132,11 @@ router.post(
       return;
     }
 
-    const user = await requireDiscordUser(parsed.data.discordId, res);
-    if (!user) return;
+    const actor = await requireAgentUser(req, res);
+    if (!actor) return;
 
     try {
-      const wishlistItem = await cancelWishlistItem(user.familyId, req.params.id);
+      const wishlistItem = await cancelWishlistItem(actor.familyId, req.params.id);
       if (!wishlistItem) {
         sendNotFound(res, '購入予定', 'WISHLIST_NOT_FOUND');
         return;

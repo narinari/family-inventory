@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import { requireDiscordUserFromQuery } from './helpers.js';
+import { requireAgentUser } from './helpers.js';
 import { asyncHandler } from '../../utils/async-handler.js';
 import { sendSuccess, sendNotFound } from '../../utils/response.js';
 import { getBoxes, getBoxById, getBoxItems } from '../../services/box.service.js';
@@ -15,11 +15,11 @@ const router: Router = Router();
 router.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    const user = await requireDiscordUserFromQuery(req, res);
-    if (!user) return;
+    const actor = await requireAgentUser(req, res);
+    if (!actor) return;
 
-    const boxes = await getBoxes(user.familyId);
-    const locations = await getLocations(user.familyId);
+    const boxes = await getBoxes(actor.familyId);
+    const locations = await getLocations(actor.familyId);
 
     const boxesWithLocation = boxes.map((box) => {
       const location = locations.find((l) => l.id === box.locationId);
@@ -33,17 +33,17 @@ router.get(
 router.get(
   '/:id/items',
   asyncHandler(async (req: Request, res: Response) => {
-    const user = await requireDiscordUserFromQuery(req, res);
-    if (!user) return;
+    const actor = await requireAgentUser(req, res);
+    if (!actor) return;
 
-    const box = await getBoxById(user.familyId, req.params.id);
+    const box = await getBoxById(actor.familyId, req.params.id);
     if (!box) {
       sendNotFound(res, '箱', 'BOX_NOT_FOUND');
       return;
     }
 
-    const items = await getBoxItems(user.familyId, req.params.id);
-    const itemTypes = await getItemTypes(user.familyId);
+    const items = await getBoxItems(actor.familyId, req.params.id);
+    const itemTypes = await getItemTypes(actor.familyId);
 
     const itemsWithType = items.map((item) => {
       const itemType = itemTypes.find((t) => t.id === item.itemTypeId);
