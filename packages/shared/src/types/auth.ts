@@ -92,6 +92,14 @@ export interface DiscordLinkRequest {
 }
 
 // ============================================
+// エージェント認証関連の型定義
+// ============================================
+
+export interface AgentActor {
+  actorId: string;
+}
+
+// ============================================
 // API レスポンス型
 // ============================================
 
@@ -134,6 +142,9 @@ export const ErrorCodes = {
   DISCORD_OAUTH_FAILED: 'DISCORD_OAUTH_FAILED',
   DISCORD_ALREADY_LINKED: 'DISCORD_ALREADY_LINKED',
   DISCORD_NOT_LINKED: 'DISCORD_NOT_LINKED',
+  AGENT_API_NOT_CONFIGURED: 'AGENT_API_NOT_CONFIGURED',
+  MISSING_AGENT_ACTOR: 'MISSING_AGENT_ACTOR',
+  AGENT_ACTOR_NOT_MAPPED: 'AGENT_ACTOR_NOT_MAPPED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];

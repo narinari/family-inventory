@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { auth } from '../lib/firebase-admin.js';
-import type { AuthUser } from '@family-inventory/shared';
+import type { AgentActor, AuthUser } from '@family-inventory/shared';
 import { ErrorCodes } from '@family-inventory/shared';
 
 declare global {
   namespace Express {
     interface Request {
       authUser?: AuthUser;
+      agentActor?: AgentActor;
     }
   }
 }
@@ -127,5 +128,54 @@ export function authenticateBotApiKey(
     return;
   }
 
+  next();
+}
+
+const AGENT_API_KEY = process.env.AGENT_API_KEY;
+
+export function authenticateAgent(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  if (!AGENT_API_KEY) {
+    res.status(500).json({
+      success: false,
+      error: {
+        code: ErrorCodes.AGENT_API_NOT_CONFIGURED,
+        message: 'エージェント API キーが設定されていません',
+      },
+    });
+    return;
+  }
+
+  const apiKey = req.headers['x-api-key'];
+
+  if (apiKey !== AGENT_API_KEY) {
+    res.status(401).json({
+      success: false,
+      error: {
+        code: ErrorCodes.INVALID_API_KEY,
+        message: '無効なAPI Keyです',
+      },
+    });
+    return;
+  }
+
+  const actorHeader = req.headers['x-agent-actor'];
+  const actorId = Array.isArray(actorHeader) ? actorHeader[0] : actorHeader;
+
+  if (!actorId || actorId.trim() === '') {
+    res.status(401).json({
+      success: false,
+      error: {
+        code: ErrorCodes.MISSING_AGENT_ACTOR,
+        message: 'X-Agent-Actor ヘッダが必要です',
+      },
+    });
+    return;
+  }
+
+  req.agentActor = { actorId };
   next();
 }
