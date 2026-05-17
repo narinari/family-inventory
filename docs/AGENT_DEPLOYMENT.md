@@ -63,10 +63,23 @@ gcloud config set project <PROJECT_ID>
 
 ### 生成
 
+下記のいずれか 1 つを実行（環境に応じて）:
+
 ```bash
+# A. openssl (最もポピュラー)
 openssl rand -hex 32
-# 例: 9f2a... (64 文字の hex 文字列)
+
+# B. xxd + /dev/urandom (coreutils 系のみ)
+head -c 32 /dev/urandom | xxd -p -c 64
+
+# C. Python (大抵の環境で利用可)
+python3 -c 'import secrets; print(secrets.token_hex(32))'
+
+# D. nix shell で openssl を一時取得
+nix shell nixpkgs#openssl --command openssl rand -hex 32
 ```
+
+いずれも 64 文字の hex 文字列を出力します（例: `9f2a...`）。
 
 ### 保管先
 
