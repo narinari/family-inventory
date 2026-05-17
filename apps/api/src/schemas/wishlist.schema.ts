@@ -29,9 +29,8 @@ export const updateWishlistSchema = z.object({
   memo: z.string().max(1000).optional(),
 });
 
-// Agent API用スキーマ (discordId は TASK-4 で削除予定。移行期間のため optional)
-export const botCreateWishlistSchema = z.object({
-  discordId: z.string().optional(),
+// Agent API用スキーマ
+export const agentCreateWishlistSchema = z.object({
   name: z.string().min(1).max(200).trim(),
   priority: z.enum(['high', 'medium', 'low']).optional(),
   priceRange: z.string().max(100).optional(),

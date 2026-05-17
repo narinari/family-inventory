@@ -17,7 +17,7 @@ import {
   cancelWishlistItem,
   searchWishlistItems,
 } from '../../services/wishlist.service.js';
-import { botCreateWishlistSchema, statusActionSchema } from '../../schemas/index.js';
+import { agentCreateWishlistSchema, statusActionSchema } from '../../schemas/index.js';
 
 const router: Router = Router();
 
@@ -77,14 +77,13 @@ router.get(
 router.post(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    const parsed = botCreateWishlistSchema.safeParse(req.body);
+    const parsed = agentCreateWishlistSchema.safeParse(req.body);
     if (!parsed.success) {
       sendValidationError(res, parsed.error.errors);
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { discordId, ...input } = parsed.data;
+    const input = parsed.data;
 
     const actor = await requireAgentUser(req, res);
     if (!actor) return;

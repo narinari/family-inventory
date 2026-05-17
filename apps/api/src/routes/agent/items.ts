@@ -23,10 +23,10 @@ import {
   createItemType,
 } from '../../services/item-type.service.js';
 import {
-  botCreateItemSchema,
+  agentCreateItemSchema,
   statusActionSchema,
-  botGiveItemSchema,
-  botSellItemSchema,
+  agentGiveItemSchema,
+  agentSellItemSchema,
 } from '../../schemas/index.js';
 
 const router: Router = Router();
@@ -77,7 +77,7 @@ router.get(
 router.post(
   '/items',
   asyncHandler(async (req: Request, res: Response) => {
-    const parsed = botCreateItemSchema.safeParse(req.body);
+    const parsed = agentCreateItemSchema.safeParse(req.body);
     if (!parsed.success) {
       sendValidationError(res, parsed.error.errors);
       return;
@@ -148,7 +148,7 @@ router.post(
 router.post(
   '/items/:id/give',
   asyncHandler(async (req: Request, res: Response) => {
-    const parsed = botGiveItemSchema.safeParse(req.body);
+    const parsed = agentGiveItemSchema.safeParse(req.body);
     if (!parsed.success) {
       sendValidationError(res, parsed.error.errors);
       return;
@@ -180,7 +180,7 @@ router.post(
 router.post(
   '/items/:id/sell',
   asyncHandler(async (req: Request, res: Response) => {
-    const parsed = botSellItemSchema.safeParse(req.body);
+    const parsed = agentSellItemSchema.safeParse(req.body);
     if (!parsed.success) {
       sendValidationError(res, parsed.error.errors);
       return;

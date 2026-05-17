@@ -23,16 +23,16 @@ export {
   sellItemSchema,
   verifyItemSchema,
   batchVerifyItemsSchema,
-  botCreateItemSchema,
-  botGiveItemSchema,
-  botSellItemSchema,
+  agentCreateItemSchema,
+  agentGiveItemSchema,
+  agentSellItemSchema,
 } from './item.schema.js';
 
 // 購入予定関連
 export {
   createWishlistSchema,
   updateWishlistSchema,
-  botCreateWishlistSchema,
+  agentCreateWishlistSchema,
 } from './wishlist.schema.js';
 
 // 箱関連
