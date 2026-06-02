@@ -46,10 +46,9 @@ export const batchVerifyItemsSchema = z.object({
   verifyAt: z.coerce.date().optional(),
 });
 
-// Bot API用スキーマ
-export const botCreateItemSchema = z
+// Agent API用スキーマ
+export const agentCreateItemSchema = z
   .object({
-    discordId: z.string().min(1),
     itemTypeId: z.string().min(1).optional(),
     itemTypeName: z.string().min(1).optional(),
     boxId: z.string().optional(),
@@ -59,13 +58,11 @@ export const botCreateItemSchema = z
     message: 'itemTypeId または itemTypeName が必要です',
   });
 
-export const botGiveItemSchema = z.object({
-  discordId: z.string().min(1),
+export const agentGiveItemSchema = z.object({
   givenTo: z.string().min(1),
 });
 
-export const botSellItemSchema = z.object({
-  discordId: z.string().min(1),
+export const agentSellItemSchema = z.object({
   soldTo: z.string().optional(),
   soldPrice: z.number().min(0).optional(),
 });

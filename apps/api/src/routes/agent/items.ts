@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import type { ItemStatus } from '@family-inventory/shared';
-import { requireDiscordUser, requireDiscordUserFromQuery } from './helpers.js';
+import { requireAgentUser } from './helpers.js';
 import { asyncHandler } from '../../utils/async-handler.js';
 import {
   sendSuccess,
@@ -23,10 +23,10 @@ import {
   createItemType,
 } from '../../services/item-type.service.js';
 import {
-  botCreateItemSchema,
+  agentCreateItemSchema,
   statusActionSchema,
-  botGiveItemSchema,
-  botSellItemSchema,
+  agentGiveItemSchema,
+  agentSellItemSchema,
 } from '../../schemas/index.js';
 
 const router: Router = Router();
@@ -38,16 +38,16 @@ const router: Router = Router();
 router.get(
   '/items',
   asyncHandler(async (req: Request, res: Response) => {
-    const user = await requireDiscordUserFromQuery(req, res);
-    if (!user) return;
+    const actor = await requireAgentUser(req, res);
+    if (!actor) return;
 
     const filter = {
       status: req.query.status as ItemStatus | undefined,
       search: req.query.search as string | undefined,
     };
 
-    const items = await getItems(user.familyId, filter);
-    const itemTypes = await getItemTypes(user.familyId);
+    const items = await getItems(actor.familyId, filter);
+    const itemTypes = await getItemTypes(actor.familyId);
 
     const itemsWithType = items.map((item) => {
       const itemType = itemTypes.find((t) => t.id === item.itemTypeId);
@@ -61,10 +61,10 @@ router.get(
 router.get(
   '/items/:id/location',
   asyncHandler(async (req: Request, res: Response) => {
-    const user = await requireDiscordUserFromQuery(req, res);
-    if (!user) return;
+    const actor = await requireAgentUser(req, res);
+    if (!actor) return;
 
-    const location = await getItemLocation(user.familyId, req.params.id);
+    const location = await getItemLocation(actor.familyId, req.params.id);
     if (!location) {
       sendNotFound(res, '持ち物', 'ITEM_NOT_FOUND');
       return;
@@ -77,40 +77,40 @@ router.get(
 router.post(
   '/items',
   asyncHandler(async (req: Request, res: Response) => {
-    const parsed = botCreateItemSchema.safeParse(req.body);
+    const parsed = agentCreateItemSchema.safeParse(req.body);
     if (!parsed.success) {
       sendValidationError(res, parsed.error.errors);
       return;
     }
 
-    const { discordId, itemTypeId, itemTypeName, boxId, memo } = parsed.data;
+    const { itemTypeId, itemTypeName, boxId, memo } = parsed.data;
 
-    const user = await requireDiscordUser(discordId, res);
-    if (!user) return;
+    const actor = await requireAgentUser(req, res);
+    if (!actor) return;
 
     let resolvedItemTypeId = itemTypeId;
     if (!resolvedItemTypeId && itemTypeName) {
-      const itemTypes = await getItemTypes(user.familyId);
+      const itemTypes = await getItemTypes(actor.familyId);
       const existing = itemTypes.find(
         (t) => t.name.toLowerCase() === itemTypeName.toLowerCase()
       );
       if (existing) {
         resolvedItemTypeId = existing.id;
       } else {
-        const newItemType = await createItemType(user.familyId, { name: itemTypeName });
+        const newItemType = await createItemType(actor.familyId, { name: itemTypeName });
         resolvedItemTypeId = newItemType.id;
       }
     }
 
-    const item = await createItem(user.familyId, user.id, {
+    const item = await createItem(actor.familyId, actor.userId, {
       itemTypeId: resolvedItemTypeId!,
-      ownerId: user.id,
+      ownerId: actor.userId,
       boxId,
       memo,
       purchasedAt: new Date(),
     });
 
-    const itemType = await getItemTypeById(user.familyId, resolvedItemTypeId!);
+    const itemType = await getItemTypeById(actor.familyId, resolvedItemTypeId!);
 
     sendCreated(res, { item: { ...item, itemTypeName: itemType?.name || '不明' } });
   }, '持ち物の作成中にエラーが発生しました')
@@ -125,11 +125,11 @@ router.post(
       return;
     }
 
-    const user = await requireDiscordUser(parsed.data.discordId, res);
-    if (!user) return;
+    const actor = await requireAgentUser(req, res);
+    if (!actor) return;
 
     try {
-      const item = await consumeItem(user.familyId, req.params.id, { consumedAt: new Date() });
+      const item = await consumeItem(actor.familyId, req.params.id, { consumedAt: new Date() });
       if (!item) {
         sendNotFound(res, '持ち物', 'ITEM_NOT_FOUND');
         return;
@@ -148,17 +148,17 @@ router.post(
 router.post(
   '/items/:id/give',
   asyncHandler(async (req: Request, res: Response) => {
-    const parsed = botGiveItemSchema.safeParse(req.body);
+    const parsed = agentGiveItemSchema.safeParse(req.body);
     if (!parsed.success) {
       sendValidationError(res, parsed.error.errors);
       return;
     }
 
-    const user = await requireDiscordUser(parsed.data.discordId, res);
-    if (!user) return;
+    const actor = await requireAgentUser(req, res);
+    if (!actor) return;
 
     try {
-      const item = await giveItem(user.familyId, req.params.id, {
+      const item = await giveItem(actor.familyId, req.params.id, {
         givenTo: parsed.data.givenTo,
         givenAt: new Date(),
       });
@@ -180,17 +180,17 @@ router.post(
 router.post(
   '/items/:id/sell',
   asyncHandler(async (req: Request, res: Response) => {
-    const parsed = botSellItemSchema.safeParse(req.body);
+    const parsed = agentSellItemSchema.safeParse(req.body);
     if (!parsed.success) {
       sendValidationError(res, parsed.error.errors);
       return;
     }
 
-    const user = await requireDiscordUser(parsed.data.discordId, res);
-    if (!user) return;
+    const actor = await requireAgentUser(req, res);
+    if (!actor) return;
 
     try {
-      const item = await sellItem(user.familyId, req.params.id, {
+      const item = await sellItem(actor.familyId, req.params.id, {
         soldTo: parsed.data.soldTo,
         soldPrice: parsed.data.soldPrice,
         soldAt: new Date(),
@@ -217,10 +217,10 @@ router.post(
 router.get(
   '/item-types',
   asyncHandler(async (req: Request, res: Response) => {
-    const user = await requireDiscordUserFromQuery(req, res);
-    if (!user) return;
+    const actor = await requireAgentUser(req, res);
+    if (!actor) return;
 
-    const itemTypes = await getItemTypes(user.familyId);
+    const itemTypes = await getItemTypes(actor.familyId);
     sendSuccess(res, { itemTypes });
   }, 'アイテム種別の取得中にエラーが発生しました')
 );

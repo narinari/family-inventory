@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import { requireDiscordUserFromQuery } from './helpers.js';
+import { requireAgentUser } from './helpers.js';
 import { asyncHandler } from '../../utils/async-handler.js';
 import { sendSuccess, sendError } from '../../utils/response.js';
 import { getItems, getItemLocation } from '../../services/item.service.js';
@@ -20,17 +20,17 @@ router.get(
       return;
     }
 
-    const user = await requireDiscordUserFromQuery(req, res);
-    if (!user) return;
+    const actor = await requireAgentUser(req, res);
+    if (!actor) return;
 
     // アイテム種別で検索
-    const itemTypes = await getItemTypes(user.familyId);
+    const itemTypes = await getItemTypes(actor.familyId);
     const matchingTypes = itemTypes.filter((t) =>
       t.name.toLowerCase().includes(query.toLowerCase())
     );
 
     // マッチしたアイテム種別のIDで持ち物を検索
-    const items = await getItems(user.familyId, { status: 'owned' });
+    const items = await getItems(actor.familyId, { status: 'owned' });
     const matchingItems = items.filter((item) =>
       matchingTypes.some((t) => t.id === item.itemTypeId)
     );
@@ -38,7 +38,7 @@ router.get(
     // 場所情報を付与
     const results = await Promise.all(
       matchingItems.map(async (item) => {
-        const location = await getItemLocation(user.familyId, item.id);
+        const location = await getItemLocation(actor.familyId, item.id);
         const itemType = matchingTypes.find((t) => t.id === item.itemTypeId);
         return {
           item: { ...item, itemTypeName: itemType?.name || '不明' },

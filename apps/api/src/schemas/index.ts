@@ -11,7 +11,6 @@ export {
   joinSchema,
   createInviteSchema,
   updateProfileSchema,
-  discordCallbackSchema,
 } from './auth.schema.js';
 
 // アイテム（持ち物）関連
@@ -23,16 +22,16 @@ export {
   sellItemSchema,
   verifyItemSchema,
   batchVerifyItemsSchema,
-  botCreateItemSchema,
-  botGiveItemSchema,
-  botSellItemSchema,
+  agentCreateItemSchema,
+  agentGiveItemSchema,
+  agentSellItemSchema,
 } from './item.schema.js';
 
 // 購入予定関連
 export {
   createWishlistSchema,
   updateWishlistSchema,
-  botCreateWishlistSchema,
+  agentCreateWishlistSchema,
 } from './wishlist.schema.js';
 
 // 箱関連

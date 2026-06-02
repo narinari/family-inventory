@@ -1,5 +1,11 @@
 {
   "permissions": {
-    "allow": []
+    "allow": [
+      "Bash(pnpm --filter web add qrcode)",
+      "Bash(pnpm --filter web add -D @types/qrcode)",
+      "Bash(pnpm:*)",
+      "Bash(bd --help)",
+      "Bash(nix develop *)"
+    ]
   }
 }

@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { auth } from '../lib/firebase-admin.js';
-import type { AuthUser } from '@family-inventory/shared';
+import type { AgentActor, AuthUser } from '@family-inventory/shared';
 import { ErrorCodes } from '@family-inventory/shared';
 
 declare global {
   namespace Express {
     interface Request {
       authUser?: AuthUser;
+      agentActor?: AgentActor;
     }
   }
 }
@@ -85,19 +86,19 @@ export async function optionalAuth(
   next();
 }
 
-const BOT_API_KEY = process.env.BOT_API_KEY;
+const AGENT_API_KEY = process.env.AGENT_API_KEY;
 
-export function authenticateBotApiKey(
+export function authenticateAgent(
   req: Request,
   res: Response,
   next: NextFunction
 ): void {
-  if (!BOT_API_KEY) {
-    res.status(503).json({
+  if (!AGENT_API_KEY) {
+    res.status(500).json({
       success: false,
       error: {
-        code: ErrorCodes.BOT_API_NOT_CONFIGURED,
-        message: 'Bot APIが設定されていません',
+        code: ErrorCodes.AGENT_API_NOT_CONFIGURED,
+        message: 'エージェント API キーが設定されていません',
       },
     });
     return;
@@ -105,18 +106,7 @@ export function authenticateBotApiKey(
 
   const apiKey = req.headers['x-api-key'];
 
-  if (!apiKey) {
-    res.status(401).json({
-      success: false,
-      error: {
-        code: ErrorCodes.UNAUTHORIZED,
-        message: 'API Keyが必要です',
-      },
-    });
-    return;
-  }
-
-  if (apiKey !== BOT_API_KEY) {
+  if (apiKey !== AGENT_API_KEY) {
     res.status(401).json({
       success: false,
       error: {
@@ -127,5 +117,20 @@ export function authenticateBotApiKey(
     return;
   }
 
+  const actorHeader = req.headers['x-agent-actor'];
+  const actorId = Array.isArray(actorHeader) ? actorHeader[0] : actorHeader;
+
+  if (!actorId || actorId.trim() === '') {
+    res.status(401).json({
+      success: false,
+      error: {
+        code: ErrorCodes.MISSING_AGENT_ACTOR,
+        message: 'X-Agent-Actor ヘッダが必要です',
+      },
+    });
+    return;
+  }
+
+  req.agentActor = { actorId };
   next();
 }

@@ -82,9 +82,9 @@
               bashInteractive
               google-cloud-sdk
               pnpm
-              claude-code
               gh
               jdk # for Firebase Emulator
+              beads
             ];
             inherit shellHook;
             buildInputs = enabledPackages;

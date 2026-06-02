@@ -29,9 +29,8 @@ export const updateWishlistSchema = z.object({
   memo: z.string().max(1000).optional(),
 });
 
-// Bot API用スキーマ
-export const botCreateWishlistSchema = z.object({
-  discordId: z.string().min(1),
+// Agent API用スキーマ
+export const agentCreateWishlistSchema = z.object({
   name: z.string().min(1).max(200).trim(),
   priority: z.enum(['high', 'medium', 'low']).optional(),
   priceRange: z.string().max(100).optional(),

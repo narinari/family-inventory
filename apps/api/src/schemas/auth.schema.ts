@@ -20,7 +20,3 @@ export const updateProfileSchema = z
   .refine((data) => data.displayName !== undefined || data.photoURL !== undefined, {
     message: '更新するフィールドが必要です',
   });
-
-export const discordCallbackSchema = z.object({
-  code: z.string().min(1),
-});

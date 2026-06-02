@@ -1,16 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
-import { DiscordLinkButton } from '@/components/settings/DiscordLinkButton';
 
 export default function SettingsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -35,16 +33,6 @@ export default function SettingsPage() {
       <Header />
       <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-8">設定</h1>
-
-        {message && (
-          <div
-            className={`mb-6 p-4 rounded-lg ${
-              message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
 
         <section className="bg-white rounded-xl shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -92,17 +80,6 @@ export default function SettingsPage() {
             </p>
           </section>
         )}
-
-        <section className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Discord 連携</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Discordと連携すると、Botから持ち物の管理ができるようになります。
-          </p>
-          <DiscordLinkButton
-            onSuccess={() => setMessage({ type: 'success', text: 'Discord連携を解除しました' })}
-            onError={(text) => setMessage({ type: 'error', text })}
-          />
-        </section>
 
         <section className="bg-white rounded-xl shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between mb-2">
