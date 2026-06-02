@@ -210,19 +210,5 @@ router.post(
   }, '持ち物の売却処理中にエラーが発生しました')
 );
 
-// ============================================
-// Item Types API
-// ============================================
-
-router.get(
-  '/item-types',
-  asyncHandler(async (req: Request, res: Response) => {
-    const actor = await requireAgentUser(req, res);
-    if (!actor) return;
-
-    const itemTypes = await getItemTypes(actor.familyId);
-    sendSuccess(res, { itemTypes });
-  }, 'アイテム種別の取得中にエラーが発生しました')
-);
 
 export default router;

@@ -41,7 +41,7 @@ export { createBoxSchema, updateBoxSchema } from './box.schema.js';
 export { createLocationSchema, updateLocationSchema } from './location.schema.js';
 
 // タグ関連
-export { createTagSchema, updateTagSchema } from './tag.schema.js';
+export { createTagSchema, updateTagSchema, hexColorSchema } from './tag.schema.js';
 
 // アイテム種別関連
 export { createItemTypeSchema, updateItemTypeSchema } from './item-type.schema.js';

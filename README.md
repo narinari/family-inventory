@@ -104,6 +104,28 @@ pnpm --filter api openapi:generate
 
 Hermes Agent 側 plugin はこの YAML を取り込んで動的に tool を登録します（後述）。
 
+### 主要エンドポイント
+
+| Method | Path | 用途 |
+|--------|------|------|
+| GET | `/agent/items` | 持ち物一覧（status / search で絞り込み可） |
+| GET | `/agent/items/:id/location` | 持ち物の現在の場所を取得 |
+| POST | `/agent/items` | 持ち物を新規作成（itemTypeName 指定で自動的に種別を解決・作成） |
+| POST | `/agent/items/:id/{consume,give,sell}` | 持ち物の状態遷移 |
+| GET | `/agent/item-types` | アイテム種別の一覧 |
+| POST | `/agent/item-types` | アイテム種別を新規作成 |
+| PUT | `/agent/item-types/:id` | アイテム種別を更新（name / manufacturer / description / tags） |
+| GET | `/agent/tags` | タグの一覧 |
+| POST | `/agent/tags` | タグを新規作成（name / color） |
+| PUT | `/agent/tags/:id` | タグを更新 |
+| GET | `/agent/boxes` | 収納ボックスの一覧 |
+| GET | `/agent/boxes/:id/items` | 指定ボックス内の持ち物 |
+| GET | `/agent/locations` | 保管場所の一覧 |
+| GET | `/agent/wishlist` ほか | ほしいものリストの CRUD・状態遷移 |
+| GET | `/agent/search` | アイテム横断検索 |
+
+完全な request / response 形式は `apps/api/openapi.yaml` を参照してください。
+
 ### 本番反映手順
 
 Cloud Run / Secret Manager / Firestore への反映手順は次のドキュメントにまとめています。
