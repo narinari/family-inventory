@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase-admin.js';
-import { Tag, CreateTagInput, UpdateTagInput } from '@family-inventory/shared';
+import { Tag, CreateTagInput, UpdateTagInput, HexColor } from '@family-inventory/shared';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 function getTagsCollection(familyId: string) {
@@ -12,7 +12,7 @@ function toTag(doc: FirebaseFirestore.DocumentSnapshot, familyId: string): Tag {
     id: doc.id,
     familyId,
     name: data.name,
-    color: data.color || undefined,
+    color: (data.color || undefined) as HexColor | undefined,
     createdAt: (data.createdAt as Timestamp).toDate(),
     updatedAt: (data.updatedAt as Timestamp).toDate(),
   };

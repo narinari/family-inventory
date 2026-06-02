@@ -154,23 +154,34 @@ export interface UpdateLocationInput {
 // タグ
 // ============================================
 
+declare const __hexColorBrand: unique symbol;
+
+/**
+ * CSS HEX カラーコード。`#RGB` (短縮) または `#RRGGBB` (完全) 形式に限定される branded string。
+ *
+ * 生の string からは代入できない。Zod の `hexColorSchema` を通してのみ生成する。
+ *
+ * 例: `#fff`, `#FF8800`
+ */
+export type HexColor = string & { readonly [__hexColorBrand]: 'HexColor' };
+
 export interface Tag {
   id: string;
   familyId: string;
   name: string;
-  color?: string;
+  color?: HexColor;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface CreateTagInput {
   name: string;
-  color?: string;
+  color?: HexColor;
 }
 
 export interface UpdateTagInput {
   name?: string;
-  color?: string;
+  color?: HexColor;
 }
 
 // ============================================
@@ -257,7 +268,7 @@ export type TagSource = 'item' | 'itemType' | 'box' | 'location';
 export interface TagWithSource {
   id: string;
   name: string;
-  color?: string;
+  color?: HexColor;
   source: TagSource;
 }
 

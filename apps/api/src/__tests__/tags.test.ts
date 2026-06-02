@@ -108,6 +108,30 @@ describe('Tags API', () => {
       expect(response.status).toBe(400);
       expect(response.body.error.code).toBe('VALIDATION_ERROR');
     });
+
+    it('should reject non-HEX color', async () => {
+      mockGetUserByUid.mockResolvedValue(mockUser);
+
+      const response = await request(app)
+        .post('/tags')
+        .send({ name: '冬物', color: 'red' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(mockCreateTag).not.toHaveBeenCalled();
+    });
+
+    it('should accept short HEX color (#RGB)', async () => {
+      mockGetUserByUid.mockResolvedValue(mockUser);
+      mockCreateTag.mockResolvedValue({ ...mockTag, color: '#f80' });
+
+      const response = await request(app)
+        .post('/tags')
+        .send({ name: '冬物', color: '#f80' });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+    });
   });
 
   describe('PUT /tags/:id', () => {

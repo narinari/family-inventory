@@ -9,6 +9,10 @@ import {
   agentSellItemSchema,
   agentCreateWishlistSchema,
   statusActionSchema,
+  createItemTypeSchema,
+  updateItemTypeSchema,
+  createTagSchema,
+  updateTagSchema,
 } from '../schemas/index.js';
 
 extendZodWithOpenApi(z);
@@ -113,6 +117,27 @@ const ItemTypeSchema = z
   .openapi('ItemType', {
     description:
       'アイテム種別 (マスタ)。同じ製品を複数所有する場合に Item 同士を束ねる軸となる。',
+  });
+
+const TagSchema = z
+  .object({
+    id: z.string(),
+    familyId: z.string(),
+    name: z.string(),
+    color: z
+      .string()
+      .regex(/^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/)
+      .optional()
+      .openapi({
+        description: 'CSS HEX カラーコード (#RGB または #RRGGBB)',
+        example: '#FF8800',
+      }),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+  })
+  .openapi('Tag', {
+    description:
+      'タグ (Tag)。アイテムに付与する分類ラベル。color は CSS HEX カラーコード形式で任意。',
   });
 
 const BoxSchema = z
@@ -233,6 +258,25 @@ const ItemTypesListResponse = successEnvelope(
   z.object({ itemTypes: z.array(ItemTypeSchema) }),
   'ItemTypesListResponse',
   'アイテム種別一覧レスポンス'
+);
+
+
+const ItemTypeResponse = successEnvelope(
+  z.object({ itemType: ItemTypeSchema }),
+    'ItemTypeResponse',
+    'アイテム種別レスポンス'
+);
+
+const TagsListResponse = successEnvelope(
+  z.object({ tags: z.array(TagSchema) }),
+    'TagsListResponse',
+    'タグ一覧レスポンス'
+);
+
+const TagResponse = successEnvelope(
+  z.object({ tag: TagSchema }),
+    'TagResponse',
+    'タグレスポンス'
 );
 
 const BoxesListResponse = successEnvelope(
@@ -536,6 +580,126 @@ registry.registerPath({
     200: {
       description: 'アイテム種別一覧',
       content: { 'application/json': { schema: ItemTypesListResponse } },
+    },
+    ...commonErrorResponses,
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/agent/item-types',
+  operationId: 'createItemType',
+  summary: 'アイテム種別を新規登録',
+  description:
+      'family にアイテム種別 (ItemType) を新規作成する。name は必須。tags は任意の文字列配列。',
+  tags: ['ItemTypes'],
+  security: agentSecurity,
+  request: {
+    body: {
+      required: true,
+      content: { 'application/json': { schema: createItemTypeSchema } },
+    },
+  },
+  responses: {
+    201: {
+      description: '作成されたアイテム種別',
+      content: { 'application/json': { schema: ItemTypeResponse } },
+    },
+    ...commonErrorResponses,
+  },
+});
+
+registry.registerPath({
+  method: 'put',
+  path: '/agent/item-types/{id}',
+  operationId: 'updateItemType',
+  summary: 'アイテム種別を更新',
+  description:
+      'family に登録済みのアイテム種別を更新する。name / manufacturer / description / tags はすべて任意。',
+  tags: ['ItemTypes'],
+  security: agentSecurity,
+  request: {
+    params: z.object({
+      id: z.string().openapi({ description: 'アイテム種別 ID' }),
+    }),
+    body: {
+      required: false,
+      content: { 'application/json': { schema: updateItemTypeSchema } },
+    },
+  },
+  responses: {
+    200: {
+      description: '更新されたアイテム種別',
+      content: { 'application/json': { schema: ItemTypeResponse } },
+    },
+    ...commonErrorResponses,
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/agent/tags',
+  operationId: 'listTags',
+  summary: 'タグの一覧を取得',
+  description:
+      'family に登録済みのタグ (Tag) を全件返す。name 順にソートされる。',
+  tags: ['Tags'],
+  security: agentSecurity,
+  responses: {
+    200: {
+      description: 'タグ一覧',
+      content: { 'application/json': { schema: TagsListResponse } },
+    },
+    ...commonErrorResponses,
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/agent/tags',
+  operationId: 'createTag',
+  summary: 'タグを新規登録',
+  description:
+      'family にタグ (Tag) を新規作成する。name は必須。color は CSS カラーコード (例: "#FF0000") で任意。',
+  tags: ['Tags'],
+  security: agentSecurity,
+  request: {
+    body: {
+      required: true,
+      content: { 'application/json': { schema: createTagSchema } },
+    },
+  },
+  responses: {
+    201: {
+      description: '作成されたタグ',
+      content: { 'application/json': { schema: TagResponse } },
+    },
+    ...commonErrorResponses,
+  },
+});
+
+registry.registerPath({
+  method: 'put',
+  path: '/agent/tags/{id}',
+  operationId: 'updateTag',
+  summary: 'タグを更新',
+  description:
+      'family に登録済みのタグ (Tag) を更新する。name / color はどちらも任意。',
+  tags: ['Tags'],
+  security: agentSecurity,
+  request: {
+    params: z.object({
+      id: z.string().openapi({ description: 'タグ ID' }),
+    }),
+    body: {
+      required: false,
+      content: { 'application/json': { schema: updateTagSchema } },
+    },
+  },
+  responses: {
+    200: {
+      description: '更新されたタグ',
+      content: { 'application/json': { schema: TagResponse } },
     },
     ...commonErrorResponses,
   },
